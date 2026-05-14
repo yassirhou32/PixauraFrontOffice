@@ -227,8 +227,16 @@ export default function AdminDashboardPage() {
                   </ChromeCard>
                 ))}
 
-                <ChromeCard className="md:col-span-2 lg:col-span-3 min-h-[400px]" title="System Telemetry" subtitle="Demandes créées vs validations (données réelles)">
-                  <div className="absolute top-6 right-6 flex gap-2">
+                <ChromeCard
+                  className="min-w-0 md:col-span-2 lg:col-span-3 min-h-[400px]"
+                  title="System Telemetry"
+                  subtitle="Demandes créées vs validations (données réelles)"
+                >
+                  {/*
+                    Mobile : pas d'absolute — sinon les boutons recouvrent le titre (Safari iPhone).
+                    md+ : même mise en page qu'avant (coin haut-droit).
+                  */}
+                  <div className="relative z-20 mb-3 flex w-full min-w-0 flex-wrap items-center justify-center gap-2 sm:justify-end md:absolute md:top-6 md:right-6 md:mb-0 md:w-auto md:justify-end">
                     {(
                       [
                         { id: "daily" as const, label: "Jour" },
@@ -241,16 +249,17 @@ export default function AdminDashboardPage() {
                         type="button"
                         onClick={() => setChartPeriod(id)}
                         className={cn(
-                          "px-3 py-1 text-[10px] font-mono border border-white/20 rounded uppercase transition-colors tracking-wider",
-                          chartPeriod === id ? "bg-white text-black font-bold" : "hover:bg-white/10 hover:text-white"
+                          "shrink-0 px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider transition-colors sm:py-1",
+                          "rounded border border-white/20",
+                          chartPeriod === id ? "bg-white font-bold text-black" : "hover:bg-white/10 hover:text-white"
                         )}
                       >
                         {label}
                       </button>
                     ))}
                   </div>
-                  <div className="h-[300px] w-full mt-4">
-                    <ResponsiveContainer width="100%" height="100%">
+                  <div className="mt-1 h-[240px] w-full min-w-0 sm:h-[280px] md:mt-4 md:h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                       <AreaChart data={chartData}>
                         <defs>
                           <linearGradient id="colorDemandes" x1="0" y1="0" x2="0" y2="1">
