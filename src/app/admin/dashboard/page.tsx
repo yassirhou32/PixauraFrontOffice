@@ -182,27 +182,35 @@ export default function AdminDashboardPage() {
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl pb-8 pr-1 scrollbar-none sm:rounded-[32px] sm:pr-2 sm:pb-10">
-        <div className="flex flex-col gap-10 pb-4">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <ChromeCard className="md:col-span-2 bg-gradient-to-r from-indigo-900/30 to-purple-900/30" title="Demandes totales" subtitle="Vue operationnelle">
-                  <div className="flex justify-between items-start h-full relative z-10">
-                    <div className="flex flex-col justify-between h-full">
-                      <div className="flex items-center gap-2 border border-white/20 rounded-full w-fit px-3 py-1 bg-white/5 backdrop-blur-md">
-                        <Zap className="w-4 h-4 text-yellow-300" />
+        <div className="flex flex-col gap-6 pb-4 sm:gap-10">
+              {/*
+                Mobile : une carte = une ligne (évite grille / h-full qui écrase sous Safari).
+                md+ : grille desktop inchangée.
+              */}
+              <div className="flex shrink-0 flex-col gap-6 md:grid md:grid-cols-2 md:gap-6 lg:grid-cols-4">
+                <ChromeCard
+                  className="w-full min-w-0 shrink-0 md:col-span-2 md:min-h-0 bg-gradient-to-r from-indigo-900/30 to-purple-900/30"
+                  title="Demandes totales"
+                  subtitle="Vue operationnelle"
+                >
+                  <div className="relative z-10 flex min-h-0 flex-col gap-6 sm:h-full sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                    <div className="flex min-h-0 flex-col justify-between gap-4 sm:h-full sm:gap-0">
+                      <div className="flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 backdrop-blur-md">
+                        <Zap className="h-4 w-4 shrink-0 text-yellow-300" />
                         <span className="text-xs font-bold uppercase">Total demandes</span>
                       </div>
                       <div>
                         <h2 className="text-4xl font-black tracking-tighter text-glow sm:text-5xl md:text-6xl">{stats?.total ?? 0}</h2>
-                        <p className="font-mono text-neutral-400 mt-2">P2C enregistres</p>
+                        <p className="mt-2 font-mono text-neutral-400">P2C enregistres</p>
                       </div>
                     </div>
-                    <div className="h-full flex items-end gap-1">
+                    <div className="flex shrink-0 items-end justify-center gap-1 self-center sm:h-full sm:self-end sm:justify-end">
                       {[...Array(8)].map((_, i) => (
                         <motion.div
                           key={i}
                           animate={{ height: [20, 60, 20] }}
                           transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1, ease: "easeInOut" }}
-                          className="w-4 bg-white/20 rounded-t-full"
+                          className="w-3 rounded-t-full bg-white/20 sm:w-4"
                         />
                       ))}
                     </div>
@@ -213,14 +221,19 @@ export default function AdminDashboardPage() {
                   { label: "Clients actifs", val: String(stats?.clientsActifs ?? 0), trend: "en ligne" },
                   { label: "En attente", val: String(stats?.en_attente ?? 0), trend: "a traiter" },
                 ].map((stat, i) => (
-                  <ChromeCard key={i} className="flex flex-col h-full justify-between" title={stat.label} subtitle={stat.trend}>
-                    <div className="flex flex-col h-full justify-between">
+                  <ChromeCard
+                    key={i}
+                    className="flex w-full min-w-0 shrink-0 flex-col justify-between md:h-full"
+                    title={stat.label}
+                    subtitle={stat.trend}
+                  >
+                    <div className="flex min-h-0 flex-col justify-between gap-3 md:h-full">
                       <p className="font-mono text-xs uppercase text-neutral-400">{stat.label}</p>
-                      <div className="flex items-end justify-between">
+                      <div className="flex items-end justify-between gap-2">
                         <h3 className="text-3xl font-bold sm:text-4xl">{stat.val}</h3>
-                        <div className="bg-white/10 px-2 py-1 rounded text-xs font-mono">{stat.trend}</div>
+                        <div className="shrink-0 rounded bg-white/10 px-2 py-1 font-mono text-xs">{stat.trend}</div>
                       </div>
-                      <div className="w-full h-1 bg-white/10 rounded-full mt-4 overflow-hidden">
+                      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/10 md:mt-4">
                         <motion.div initial={{ width: 0 }} animate={{ width: "70%" }} transition={{ delay: 0.5 }} className="h-full bg-white shadow-[0_0_10px_white]" />
                       </div>
                     </div>
@@ -228,7 +241,7 @@ export default function AdminDashboardPage() {
                 ))}
 
                 <ChromeCard
-                  className="min-w-0 md:col-span-2 lg:col-span-3 min-h-[400px]"
+                  className="min-h-0 w-full min-w-0 shrink-0 md:col-span-2 md:min-h-0 lg:col-span-3 lg:min-h-[400px]"
                   title="System Telemetry"
                   subtitle="Demandes créées vs validations (données réelles)"
                 >
@@ -313,9 +326,13 @@ export default function AdminDashboardPage() {
                   </div>
                 </ChromeCard>
 
-                <ChromeCard title="Analysis" subtitle="Répartition statuts et clients (comptages réels)" className="flex flex-col items-center justify-center">
-                  <div className="h-[250px] w-full mt-4">
-                    <ResponsiveContainer width="100%" height="100%">
+                <ChromeCard
+                  title="Analysis"
+                  subtitle="Répartition statuts et clients (comptages réels)"
+                  className="flex w-full min-w-0 shrink-0 flex-col items-center justify-center md:min-h-0"
+                >
+                  <div className="mt-4 h-[220px] w-full min-w-0 sm:h-[240px] md:h-[250px]">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                       <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
                         <PolarGrid stroke="rgba(255,255,255,0.1)" />
                         <PolarAngleAxis dataKey="subject" tick={{ fill: "#a3a3a3", fontSize: 10, fontFamily: "Montserrat, sans-serif" }} />
@@ -342,10 +359,14 @@ export default function AdminDashboardPage() {
               </div>
 
               <ChromeCard
-                className="flex min-h-[min(70vh,520px)] w-full flex-1 flex-col overflow-hidden sm:min-h-[600px]"
+                className={cn(
+                  "flex w-full shrink-0 flex-col overflow-hidden",
+                  "max-md:flex-none max-md:min-h-0",
+                  "md:flex-1 md:min-h-[min(70vh,520px)]"
+                )}
                 title=""
                 subtitle=""
-                innerClassName="flex min-h-0 flex-1 flex-col p-0"
+                innerClassName="flex min-h-0 flex-col p-0 max-md:min-h-0 max-md:flex-none md:flex-1"
               >
                 <div className="flex shrink-0 flex-col gap-1 border-b border-white/10 bg-black/40 px-4 py-4 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between sm:px-6">
                   <div className="min-w-0 pr-2">
@@ -356,7 +377,7 @@ export default function AdminDashboardPage() {
                     <p className="mt-1 font-mono text-[10px] text-neutral-400 sm:text-xs">{requests.length} paquets interceptes</p>
                   </div>
                 </div>
-                <div className="min-h-0 flex-1 overflow-auto">
+                <div className="min-h-0 flex-1 overflow-auto max-md:max-h-[min(52vh,420px)] max-md:flex-none md:max-h-none">
                   <table className="w-full min-w-[32rem] table-fixed text-left font-mono text-[11px] sm:min-w-0 sm:table-auto sm:text-xs">
                     <thead className="sticky top-0 z-10 border-b border-white/10 bg-neutral-900/95 backdrop-blur-md">
                       <tr>
