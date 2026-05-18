@@ -174,7 +174,7 @@ export default function AdminDashboardPage() {
           </h1>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[10px] uppercase tracking-widest text-neutral-400 sm:text-xs">
             <div className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-green-400 shadow-[0_0_10px_#4ade80]" />
-            <span className="min-w-0">Backoffice connecte</span>
+            <span className="min-w-0">Backoffice connecté</span>
             <span className="text-neutral-600">|</span>
             <span>v.1.0.0</span>
           </div>
@@ -191,7 +191,7 @@ export default function AdminDashboardPage() {
                 <ChromeCard
                   className="w-full min-w-0 shrink-0 md:col-span-2 md:min-h-0 bg-gradient-to-r from-indigo-900/30 to-purple-900/30"
                   title="Demandes totales"
-                  subtitle="Vue operationnelle"
+                  subtitle="Vue opérationnelle"
                 >
                   <div className="relative z-10 flex min-h-0 flex-col gap-6 sm:h-full sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                     <div className="flex min-h-0 flex-col justify-between gap-4 sm:h-full sm:gap-0">
@@ -201,7 +201,7 @@ export default function AdminDashboardPage() {
                       </div>
                       <div>
                         <h2 className="text-4xl font-black tracking-tighter text-glow sm:text-5xl md:text-6xl">{stats?.total ?? 0}</h2>
-                        <p className="mt-2 font-mono text-neutral-400">P2C enregistres</p>
+                        <p className="mt-2 font-mono text-neutral-400">P2C enregistrés</p>
                       </div>
                     </div>
                     <div className="flex shrink-0 items-end justify-center gap-1 self-center sm:h-full sm:self-end sm:justify-end">
@@ -219,7 +219,7 @@ export default function AdminDashboardPage() {
 
                 {[
                   { label: "Clients actifs", val: String(stats?.clientsActifs ?? 0), trend: "en ligne" },
-                  { label: "En attente", val: String(stats?.en_attente ?? 0), trend: "a traiter" },
+                  { label: "En attente", val: String(stats?.en_attente ?? 0), trend: "à traiter" },
                 ].map((stat, i) => (
                   <ChromeCard
                     key={i}
@@ -242,7 +242,7 @@ export default function AdminDashboardPage() {
 
                 <ChromeCard
                   className="min-h-0 w-full min-w-0 shrink-0 md:col-span-2 md:min-h-0 lg:col-span-3 lg:min-h-[400px]"
-                  title="System Telemetry"
+                  title="Télémétrie système"
                   subtitle="Demandes créées vs validations (données réelles)"
                 >
                   {/*
@@ -303,7 +303,7 @@ export default function AdminDashboardPage() {
                           key={`demandes-${chartPeriod}`}
                           type="monotone"
                           dataKey="demandes"
-                          name="Demandes creees"
+                          name="Demandes créées"
                           stroke="#fff"
                           strokeWidth={2}
                           fill="url(#colorDemandes)"
@@ -314,7 +314,7 @@ export default function AdminDashboardPage() {
                           key={`validees-${chartPeriod}`}
                           type="monotone"
                           dataKey="validees"
-                          name="Validees"
+                          name="Validées"
                           stroke="#6366f1"
                           strokeWidth={2}
                           fill="transparent"
@@ -327,7 +327,7 @@ export default function AdminDashboardPage() {
                 </ChromeCard>
 
                 <ChromeCard
-                  title="Analysis"
+                  title="Analyse"
                   subtitle="Répartition statuts et clients (comptages réels)"
                   className="flex w-full min-w-0 shrink-0 flex-col items-center justify-center md:min-h-0"
                 >
@@ -351,7 +351,7 @@ export default function AdminDashboardPage() {
                             );
                           }}
                         />
-                        <Radar name="System" dataKey="A" stroke="#a855f7" strokeWidth={2} fill="#a855f7" fillOpacity={0.3} />
+                        <Radar name="Système" dataKey="A" stroke="#a855f7" strokeWidth={2} fill="#a855f7" fillOpacity={0.3} />
                       </RadarChart>
                     </ResponsiveContainer>
                   </div>
@@ -372,9 +372,9 @@ export default function AdminDashboardPage() {
                   <div className="min-w-0 pr-2">
                     <h2 className="flex flex-wrap items-center gap-2 text-lg font-black uppercase leading-snug tracking-normal text-white sm:gap-3 sm:text-xl sm:tracking-wide md:text-2xl md:tracking-widest">
                       <ActivitySquare className="h-5 w-5 shrink-0 text-indigo-500 sm:h-6 sm:w-6" />
-                      <span className="min-w-0 break-words">Demandes logs</span>
+                      <span className="min-w-0 break-words">Journal des demandes</span>
                     </h2>
-                    <p className="mt-1 font-mono text-[10px] text-neutral-400 sm:text-xs">{requests.length} paquets interceptes</p>
+                    <p className="mt-1 font-mono text-[10px] text-neutral-400 sm:text-xs">{requests.length} paquets interceptés</p>
                   </div>
                 </div>
                 <div className="min-h-0 flex-1 overflow-auto max-md:max-h-[min(52vh,420px)] max-md:flex-none md:max-h-none">

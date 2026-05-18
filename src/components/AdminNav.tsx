@@ -5,10 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { clearSession } from "@/lib/auth";
 
 const links = [
-  { href: "/admin/dashboard", label: "Dashboard" },
+  { href: "/admin/dashboard", label: "Tableau de bord" },
   { href: "/admin/clients", label: "Clients" },
   { href: "/admin/demandes", label: "Demandes" },
-  { href: "/admin/parametres", label: "Parametres" },
+  { href: "/admin/parametres", label: "Paramètres" },
 ];
 
 export default function AdminNav() {
@@ -31,7 +31,7 @@ export default function AdminNav() {
         }}
         className="rounded bg-black px-3 py-1 text-white"
       >
-        Deconnexion
+        Déconnexion
       </button>
     </header>
   );

@@ -32,7 +32,7 @@ export default function ParametresPage() {
   const [blocked, setBlocked] = useState<any[]>([]);
   const [blockedSlotsList, setBlockedSlotsList] = useState<BlockedSlotRow[]>([]);
   const [date, setDate] = useState("");
-  const [reason, setReason] = useState("jour ferie");
+  const [reason, setReason] = useState("jour férié");
   const [dayEdit, setDayEdit] = useState("");
   const [daySlots, setDaySlots] = useState<AdminSlot[]>([]);
   const [fullDayBlocked, setFullDayBlocked] = useState(false);
@@ -89,7 +89,7 @@ export default function ParametresPage() {
     const token = getToken();
     await apiFetch("/calendar/blocked", { method: "POST", body: JSON.stringify({ date, reason }) }, token);
     setDate("");
-    setReason("jour ferie");
+    setReason("jour férié");
     await load();
     if (dayEdit === date) await loadDaySlots(dayEdit);
   }
@@ -202,7 +202,7 @@ export default function ParametresPage() {
                   </p>
                   {s.adminBlocked ? (
                     <p className="text-sm leading-snug text-amber-100/95">
-                      Ce créneau de <strong>2 heures</strong> est bloqué pour les clients. Utilisez le bouton vert
+                      Ce créneau de <strong>2 heures</strong> est bloqué pour les clients. Utilisez le bouton vert{" "}
                       pour rouvrir cette plage.
                     </p>
                   ) : null}
@@ -268,9 +268,9 @@ export default function ParametresPage() {
 
         <h2 className="mb-3 mt-10 text-xl font-bold text-white">Créneaux bloqués seulement (2 h) — liste</h2>
         <p className="mb-3 max-w-3xl text-xs text-neutral-500">
-          Ici : uniquement les plages de <strong className="text-neutral-300">2 heures</strong> fermées par
-          l&apos;option 2. Débloquer ici ne retire que cette plage ; cela ne modifie pas les journées bloquées en entier
-          (liste au-dessus).
+          Ici : uniquement les plages de <strong className="text-neutral-300">2 heures</strong>{" "}fermées par
+          l&apos;option 2. Débloquer ici ne retire que
+          cette plage ; cela ne modifie pas les journées bloquées en entier (liste au-dessus).
         </p>
         <div className="space-y-4">
           {blockedSlotsList.length === 0 ? (

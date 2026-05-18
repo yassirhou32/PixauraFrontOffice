@@ -20,9 +20,9 @@ import { clearSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 const ADMIN_NAV_LINKS = [
-  { href: "/admin/dashboard", icon: Disc, key: "dashboard", label: "Dashboard" },
-  { href: "/admin/clients", icon: Waves, key: "clients", label: "Client" },
-  { href: "/admin/demandes", icon: Hexagon, key: "demandes", label: "Demande" },
+  { href: "/admin/dashboard", icon: Disc, key: "dashboard", label: "Tableau de bord" },
+  { href: "/admin/clients", icon: Waves, key: "clients", label: "Clients" },
+  { href: "/admin/demandes", icon: Hexagon, key: "demandes", label: "Demandes" },
   { href: "/admin/agenda", icon: Calendar, key: "agenda", label: "Agenda" },
   { href: "/admin/parametres", icon: Fingerprint, key: "parametres", label: "Calendrier" },
 ] as const;
@@ -251,7 +251,7 @@ function AdminPillSidebar() {
           router.push("/login");
         }}
         className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 p-[1px]"
-        title="Deconnexion"
+        title="Déconnexion"
       >
         <div className="flex h-full w-full items-center justify-center rounded-full bg-black">
           <LogOut className="h-5 w-5 text-white" />

@@ -5,6 +5,8 @@ import { FormEvent, useEffect, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Building2,
+  Eye,
+  EyeOff,
   Hash,
   Mail,
   Pencil,
@@ -39,6 +41,54 @@ function Field({
       <span className={labelClass}>{label}</span>
       {children}
     </label>
+  );
+}
+
+function PasswordInput({
+  value,
+  onChange,
+  placeholder,
+  required,
+  disabled,
+  autoComplete = "new-password",
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  disabled?: boolean;
+  autoComplete?: string;
+}) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <motion.div className="relative">
+      <input
+        className={cn(inputClass, "pr-11")}
+        placeholder={placeholder}
+        type={visible ? "text" : "password"}
+        autoComplete={autoComplete}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        disabled={disabled}
+      />
+      <button
+        type="button"
+        tabIndex={-1}
+        disabled={disabled}
+        onClick={() => setVisible((v) => !v)}
+        className={cn(
+          "absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-neutral-400 transition-colors",
+          "hover:bg-white/10 hover:text-white",
+          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500/40",
+          disabled && "pointer-events-none opacity-40"
+        )}
+        aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+      >
+        {visible ? <EyeOff className="h-4 w-4" strokeWidth={2} /> : <Eye className="h-4 w-4" strokeWidth={2} />}
+      </button>
+    </motion.div>
   );
 }
 
@@ -297,13 +347,10 @@ export default function AdminClientsPage() {
               </select>
             </Field>
             <Field label={editingId ? "Mot de passe" : "Mot de passe initial *"}>
-              <input
-                className={inputClass}
+              <PasswordInput
                 placeholder={editingId ? "inchangé depuis cet écran" : "Mot de passe transmis au client"}
-                type="password"
-                autoComplete="new-password"
                 value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                onChange={(password) => setForm({ ...form, password })}
                 required={!editingId}
                 disabled={!!editingId}
               />
