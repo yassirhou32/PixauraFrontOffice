@@ -1,5 +1,8 @@
 export const CALENDAR_API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
+/** Identifiant créneau « journée complète » (5 × 2 h, compte 2 projets P2C). */
+export const FULL_DAY_SLOT_ID = "journee-complete";
+
 export type ClientWeekFormula = "paire" | "impaire" | "vip";
 
 export type MonthAvailabilityItem = {
@@ -7,9 +10,45 @@ export type MonthAvailabilityItem = {
   selectable: boolean;
   inProfile?: boolean;
   isPast?: boolean;
+  weekBlockedByP2c?: boolean;
+  p2cQuotaFull?: boolean;
+  monthFullyBlocked?: boolean;
   fullDayBlocked?: boolean;
   hasFreeSlot?: boolean;
+  fullDayAvailable?: boolean;
+  /** Mois fermé par l'admin pour tous les clients */
+  clientMonthClosed?: boolean;
 };
+
+export type IsoWeekRef = { isoWeekYear: number; week: number };
+
+export type P2cQuotaInfo = {
+  maxPerMonth: number;
+  /** Poids consommé (1 = un créneau, 2 = journée complète) */
+  usedThisMonth: number;
+  remaining: number;
+  requestCount?: number;
+  blockedIsoWeeks: IsoWeekRef[];
+  quotaExhausted: boolean;
+  canBookFullDay?: boolean;
+  hasFullDayBooking?: boolean;
+  monthFullyBlocked?: boolean;
+};
+
+/** Année ISO + numéro de semaine ISO (aligné backend dayjs). */
+export function getIsoWeekRef(date: Date): IsoWeekRef {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - day);
+  const isoWeekYear = d.getUTCFullYear();
+  const yearStart = new Date(Date.UTC(isoWeekYear, 0, 1));
+  const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return { isoWeekYear, week };
+}
+
+export function isIsoWeekBlocked(ref: IsoWeekRef, blocked: IsoWeekRef[]): boolean {
+  return blocked.some((b) => b.isoWeekYear === ref.isoWeekYear && b.week === ref.week);
+}
 
 /** Date YYYY-MM-DD strictement avant aujourd'hui (fuseau local navigateur). */
 export function isPastDateKey(dateKey: string, now: Date = new Date()): boolean {

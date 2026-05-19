@@ -19,6 +19,20 @@ main {
   padding: 20px;
 }
 
+/* Espace membre P2C : deux formulaires côte à côte */
+main.member-main-wide {
+  max-width: min(100%, 1800px);
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+@media (min-width: 640px) {
+  main.member-main-wide {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
 input,
 textarea,
 select {

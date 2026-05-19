@@ -44,11 +44,20 @@ export default function DemandeDetailPage() {
 
   async function changeStatus(status: string) {
     const token = getToken();
-    const updated = await apiFetch(`/requests/${params.id}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ status }),
-    }, token);
+    const updated = await apiFetch<{ emailStatus?: { sent: boolean; reason?: string } }>(
+      `/requests/${params.id}/status`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      },
+      token
+    );
     setItem(updated);
+    if (status === "validee" && updated.emailStatus && !updated.emailStatus.sent) {
+      window.alert(
+        `Demande validée, mais l'e-mail de confirmation n'a pas pu être envoyé : ${updated.emailStatus.reason || "erreur inconnue"}`
+      );
+    }
   }
 
   const display = (v: string | undefined | null) => (v && String(v).trim() ? v : "—");

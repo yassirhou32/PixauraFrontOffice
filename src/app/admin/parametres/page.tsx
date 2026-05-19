@@ -27,6 +27,15 @@ type BlockedSlotRow = {
   reason: string;
 };
 
+type ClientMonthAccessItem = {
+  year: number;
+  month: number;
+  label: string;
+  openForClients: boolean;
+  isCurrentMonth: boolean;
+  recordId: string | null;
+};
+
 export default function ParametresPage() {
   const router = useRouter();
   const [blocked, setBlocked] = useState<any[]>([]);
@@ -37,6 +46,8 @@ export default function ParametresPage() {
   const [daySlots, setDaySlots] = useState<AdminSlot[]>([]);
   const [fullDayBlocked, setFullDayBlocked] = useState(false);
   const [loadingDay, setLoadingDay] = useState(false);
+  const [monthAccess, setMonthAccess] = useState<ClientMonthAccessItem[]>([]);
+  const [loadingMonths, setLoadingMonths] = useState(false);
 
   const load = async () => {
     const token = getToken();
@@ -48,7 +59,30 @@ export default function ParametresPage() {
     } catch {
       setBlockedSlotsList([]);
     }
+    setLoadingMonths(true);
+    try {
+      const months = await apiFetch<{ items: ClientMonthAccessItem[] }>(
+        "/calendar/client-month-access?count=12",
+        {},
+        token
+      );
+      setMonthAccess(months.items || []);
+    } catch {
+      setMonthAccess([]);
+    } finally {
+      setLoadingMonths(false);
+    }
   };
+
+  async function setMonthOpen(year: number, month: number, openForClients: boolean) {
+    const token = getToken();
+    await apiFetch(
+      "/calendar/client-month-access",
+      { method: "PUT", body: JSON.stringify({ year, month, openForClients }) },
+      token
+    );
+    await load();
+  }
 
   const loadDaySlots = async (d: string) => {
     if (!d) {
@@ -124,11 +158,70 @@ export default function ParametresPage() {
       <div className="flex-1 overflow-y-auto pb-10">
         <h1 className="mb-2 text-4xl font-black tracking-tight">CALENDRIER &amp; BLOCAGES</h1>
         <p className="mb-8 max-w-3xl text-sm leading-relaxed text-neutral-400">
-          <strong className="text-white">Deux possibilités distinctes :</strong> soit vous fermez{" "}
-          <strong className="text-white">toute une journée</strong> (aucun tournage ce jour-là), soit vous laissez la
-          journée ouverte et vous fermez seulement <strong className="text-white">un ou plusieurs créneaux de 2 h</strong>{" "}
-          (8h–10h, 10h–12h, 14h–16h, 16h–18h, 18h–20h) pour une date précise.
+          <strong className="text-white">Ouverture des mois (tous les clients) :</strong> fermez un mois entier pour
+          qu&apos;aucun client ne puisse y réserver (ex. juin fermé tant que vous ne l&apos;activez pas).{" "}
+          <strong className="text-white">Journées et créneaux :</strong> blocages précis ci-dessous.
         </p>
+
+        <ChromeCard
+          title="Ouverture du calendrier client par mois"
+          subtitle="Le mois courant est ouvert par défaut. Les mois suivants sont fermés jusqu’à activation."
+          className="mb-6"
+        >
+          {loadingMonths ? (
+            <p className="text-sm text-neutral-500">Chargement…</p>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {monthAccess.map((m) => (
+                <div
+                  key={`${m.year}-${m.month}`}
+                  className={`flex flex-col gap-2 rounded-lg border p-3 ${
+                    m.openForClients
+                      ? "border-emerald-500/45 bg-emerald-950/20"
+                      : "border-amber-500/40 bg-amber-950/15"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-white">
+                      {m.label}
+                      {m.isCurrentMonth ? (
+                        <span className="ml-1 text-[10px] font-normal text-violet-300">(mois actuel)</span>
+                      ) : null}
+                    </span>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                        m.openForClients
+                          ? "bg-emerald-500/25 text-emerald-100"
+                          : "bg-amber-500/20 text-amber-100"
+                      }`}
+                    >
+                      {m.openForClients ? "Ouvert" : "Fermé"}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {!m.openForClients ? (
+                      <button
+                        type="button"
+                        className="rounded bg-emerald-700 px-2 py-1 text-xs text-white"
+                        onClick={() => void setMonthOpen(m.year, m.month, true)}
+                      >
+                        Activer le mois
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="rounded bg-amber-700 px-2 py-1 text-xs text-white"
+                        onClick={() => void setMonthOpen(m.year, m.month, false)}
+                      >
+                        Fermer le mois
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </ChromeCard>
 
         <ChromeCard
           title="Option 1 — Bloquer toute la journée"

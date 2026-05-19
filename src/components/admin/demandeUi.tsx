@@ -22,12 +22,7 @@ export const STATUS_LABEL_FR: Record<string, string> = {
   a_completer: "À compléter",
 };
 
-const AXIS_LABEL_FR: Record<string, string> = {
-  commercial: "Commercial",
-  humain: "Humain",
-  expertise: "Expertise",
-  autre: "Autre",
-};
+import { axisLabelFr as axisLabelFrShared } from "@/lib/communicationAxes";
 
 const CLIENT_TYPE_LABEL_FR: Record<string, string> = {
   paire: "Semaine paire",
@@ -94,6 +89,7 @@ export function formatRequestDateShort(iso: string) {
 }
 
 export function slotLabelFromRequest(timeSlotId: string | undefined, requestedTime?: string) {
+  if (timeSlotId === "journee-complete") return "Journée complète (5 créneaux)";
   const def = FALLBACK_DAY_SLOTS.find((s) => s.id === timeSlotId);
   if (def) return def.label;
   if (timeSlotId) return timeSlotId;
@@ -102,7 +98,7 @@ export function slotLabelFromRequest(timeSlotId: string | undefined, requestedTi
 }
 
 export function axisLabelFr(axis: string) {
-  return AXIS_LABEL_FR[axis] || axis;
+  return axisLabelFrShared(axis);
 }
 
 export function DetailSection({

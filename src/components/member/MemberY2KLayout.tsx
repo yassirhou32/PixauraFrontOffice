@@ -8,7 +8,14 @@ import { clearSession } from "@/lib/auth";
 import { GlobalStyles, LiquidBackground } from "@/components/admin/Y2KAdminLayout";
 import { cn } from "@/lib/utils";
 
-export function MemberY2KLayout({ children }: { children: ReactNode }) {
+export function MemberY2KLayout({
+  children,
+  wideMain = false,
+}: {
+  children: ReactNode;
+  /** P2C : formulaires côte à côte sur grand écran */
+  wideMain?: boolean;
+}) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -68,7 +75,14 @@ export function MemberY2KLayout({ children }: { children: ReactNode }) {
             </button>
           </nav>
         </header>
-        <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pb-8 sm:pb-10">{children}</main>
+        <main
+          className={cn(
+            "min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pb-8 sm:pb-10",
+            wideMain && "member-main-wide"
+          )}
+        >
+          {children}
+        </main>
       </div>
     </div>
   );

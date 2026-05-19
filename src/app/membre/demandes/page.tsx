@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Calendar, Clock, Radio } from "lucide-react";
+import { Calendar, Clock, Pencil, Radio } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { getToken, getUser } from "@/lib/auth";
 import { useRouter } from "next/navigation";
@@ -15,6 +15,8 @@ import {
   formatRequestDateLong,
   slotLabelFromRequest,
 } from "@/components/admin/demandeUi";
+
+const EDITABLE_STATUSES = new Set(["en_attente", "a_completer"]);
 
 const STATUS_HELP: Record<string, string> = {
   en_attente: "Votre demande est en cours d'examen par Pixaura.",
@@ -91,6 +93,9 @@ export default function MembreDemandesPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[10px] font-mono uppercase tracking-widest text-neutral-500">
                           {r.company || "Demande"}
+                          {r.p2cSlot === 1 || r.p2cSlot === 2 ? (
+                            <span className="ml-2 text-violet-300/90">· Projet {r.p2cSlot}</span>
+                          ) : null}
                         </p>
                         <p className="mt-1 text-xs text-neutral-500">
                           Créée le{" "}
@@ -131,6 +136,15 @@ export default function MembreDemandesPage() {
                         </div>
                       </div>
                     </div>
+                    {EDITABLE_STATUSES.has(r.status) ? (
+                      <Link
+                        href={`/membre/demandes/${r._id}/modifier`}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-violet-400/35 bg-violet-500/15 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-violet-100 transition-colors hover:bg-violet-500/25 sm:text-sm"
+                      >
+                        <Pencil className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                        Modifier la demande
+                      </Link>
+                    ) : null}
                   </div>
                 </ChromeCard>
               </li>

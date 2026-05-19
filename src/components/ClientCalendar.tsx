@@ -7,10 +7,13 @@ import {
   CALENDAR_API_BASE,
   buildMonthCalendarGrid,
   monthLabelFr,
+  getIsoWeekRef,
+  isIsoWeekBlocked,
   isPastDateKey,
   profileFormulaLabel,
   type ClientWeekFormula,
   type MonthAvailabilityItem,
+  type P2cQuotaInfo,
   weekKindLabel,
 } from "@/lib/calendarClient";
 import { cn } from "@/lib/utils";
@@ -25,8 +28,17 @@ function dayCellClass(
   if (!cell.inMonth) {
     return "cursor-default border-transparent bg-transparent text-transparent";
   }
+  if (cell.availability?.clientMonthClosed) {
+    return "cursor-not-allowed border-zinc-800/90 bg-zinc-950/90 text-zinc-600";
+  }
   if (isPastDateKey(dateKey)) {
     return "cursor-not-allowed border-zinc-800/90 bg-zinc-950/90 text-zinc-600";
+  }
+  if (cell.availability?.monthFullyBlocked || cell.availability?.p2cQuotaFull) {
+    return "cursor-not-allowed border-zinc-800/90 bg-zinc-950/90 text-zinc-600";
+  }
+  if (cell.availability?.weekBlockedByP2c) {
+    return "cursor-not-allowed border-zinc-700/80 bg-zinc-900/90 text-zinc-600 line-through decoration-zinc-600/50";
   }
   if (selectedDate === dateKey) {
     return "border-indigo-400 bg-indigo-500/40 text-white ring-2 ring-indigo-400/60";
@@ -48,15 +60,20 @@ export default function ClientCalendar({
   token,
   selectedDate,
   onSelectDate,
+  excludeRequestId,
 }: {
   token: string;
   selectedDate: string;
   onSelectDate: (date: string) => void;
+  /** En modification : n’applique pas le quota P2C à cette demande (semaine courante dégrisée). */
+  excludeRequestId?: string;
 }) {
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
   const [dates, setDates] = useState<MonthAvailabilityItem[]>([]);
+  const [p2c, setP2c] = useState<P2cQuotaInfo | null>(null);
+  const [clientMonthOpen, setClientMonthOpen] = useState(true);
   const [clientType, setClientType] = useState<ClientWeekFormula>("paire");
 
   useEffect(() => {
@@ -67,13 +84,23 @@ export default function ClientCalendar({
 
   useEffect(() => {
     if (!token) return;
-    fetch(`${CALENDAR_API_BASE}/calendar/availability?month=${month}&year=${year}`, {
+    const q = new URLSearchParams({ month: String(month), year: String(year) });
+    if (excludeRequestId) q.set("excludeRequestId", excludeRequestId);
+    fetch(`${CALENDAR_API_BASE}/calendar/availability?${q}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
-      .then((data) => setDates(data.dates || []))
-      .catch(() => setDates([]));
-  }, [month, year, token]);
+      .then((data) => {
+        setDates(data.dates || []);
+        setP2c(data.p2c || null);
+        setClientMonthOpen(data.clientMonthOpen !== false);
+      })
+      .catch(() => {
+        setDates([]);
+        setP2c(null);
+        setClientMonthOpen(true);
+      });
+  }, [month, year, token, excludeRequestId]);
 
   const weeks = useMemo(
     () => buildMonthCalendarGrid(year, month, dates, clientType),
@@ -100,7 +127,33 @@ export default function ClientCalendar({
         <p className="text-[11px] font-semibold leading-snug text-violet-100 sm:text-xs">
           {profileFormulaLabel(clientType)}
         </p>
+        {p2c ? (
+          <p className="mt-2 text-[11px] leading-snug text-neutral-300 sm:text-xs">
+            <span className="font-semibold text-white">P2C :</span> {p2c.usedThisMonth}/{p2c.maxPerMonth} projet
+            {p2c.maxPerMonth > 1 ? "s" : ""} ce mois
+            {p2c.remaining > 0 ? ` · ${p2c.remaining} restant${p2c.remaining > 1 ? "s" : ""}` : " · quota atteint"}
+            {p2c.hasFullDayBooking && !excludeRequestId ? (
+              <span className="text-zinc-400"> · journée complète ce mois : aucune autre date</span>
+            ) : null}
+            {p2c.canBookFullDay ? (
+              <span className="text-emerald-200/90"> · journée complète possible (2 projets d’un coup)</span>
+            ) : null}
+            {excludeRequestId ? (
+              <span className="text-violet-200/90"> · mode modification (votre semaine actuelle reste choisissable)</span>
+            ) : null}
+            {!excludeRequestId && p2c.blockedIsoWeeks.length > 0 ? (
+              <> · semaine S.{p2c.blockedIsoWeeks[0].week} entièrement fermée (1ère demande)</>
+            ) : null}
+          </p>
+        ) : null}
       </div>
+
+      {!clientMonthOpen ? (
+        <p className="rounded-lg border border-amber-500/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-100">
+          Ce mois n&apos;est pas encore ouvert à la réservation. Pixaura l&apos;activera lorsque les créneaux seront
+          disponibles.
+        </p>
+      ) : null}
 
       <div className="flex min-w-0 items-center justify-between gap-2">
         <button
@@ -142,31 +195,38 @@ export default function ClientCalendar({
             const iso = row.find((c) => c.inMonth)?.isoWeek ?? row[0].isoWeek;
             const allowed = row[0].weekAllowed;
             const kind = weekKindLabel(iso);
+            const anchorDate = row.find((c) => c.inMonth)?.date ?? row[0].date;
+            const weekRef = getIsoWeekRef(anchorDate);
+            const p2cWeekBlocked = p2c ? isIsoWeekBlocked(weekRef, p2c.blockedIsoWeeks) : false;
+            const rowOpen =
+              allowed && !p2cWeekBlocked && !p2c?.monthFullyBlocked && !p2c?.quotaExhausted;
 
             return (
               <div
                 key={`${iso}-${wi}`}
                 className={cn(
                   "mb-1 grid grid-cols-[3.25rem_repeat(7,minmax(0,1fr))] gap-0.5 rounded-lg sm:grid-cols-[3.5rem_repeat(7,minmax(0,1fr))] sm:gap-1",
-                  allowed ? "bg-violet-500/5 ring-1 ring-violet-500/20" : "bg-zinc-950/40 ring-1 ring-zinc-800/80"
+                  rowOpen ? "bg-violet-500/5 ring-1 ring-violet-500/20" : "bg-zinc-950/40 ring-1 ring-zinc-800/80"
                 )}
               >
                 <div
                   className={cn(
                     "flex flex-col items-center justify-center rounded-l-md px-0.5 py-1 text-center sm:py-1.5",
-                    allowed ? "text-violet-200" : "text-zinc-600"
+                    rowOpen ? "text-violet-200" : "text-zinc-600"
                   )}
                 >
                   <span className="text-[9px] font-mono font-bold sm:text-[10px]">S.{iso}</span>
                   <span
                     className={cn(
                       "mt-0.5 text-[8px] font-bold uppercase leading-tight sm:text-[9px]",
-                      allowed ? "text-emerald-300/90" : "text-zinc-600"
+                      rowOpen ? "text-emerald-300/90" : "text-zinc-600"
                     )}
                   >
                     {kind}
                   </span>
-                  {allowed ? (
+                  {p2cWeekBlocked ? (
+                    <span className="mt-0.5 text-[7px] uppercase leading-tight text-zinc-500">P2C</span>
+                  ) : rowOpen ? (
                     <span className="mt-0.5 hidden text-[7px] uppercase text-violet-300/70 sm:block">OK</span>
                   ) : null}
                 </div>
@@ -197,7 +257,13 @@ export default function ClientCalendar({
                           ? undefined
                           : past
                             ? "Date passée — non réservable"
-                            : !cell.weekAllowed
+                            : cell.availability?.monthFullyBlocked
+                              ? "Journée complète ou quota mensuel atteint — plus de date ce mois"
+                              : cell.availability?.p2cQuotaFull
+                              ? "2 projets P2C déjà utilisés ce mois"
+                              : cell.availability?.weekBlockedByP2c
+                                ? "Semaine déjà utilisée pour votre 1re demande P2C"
+                                : !cell.weekAllowed
                               ? `Semaine ${kind} — hors de votre formule`
                               : cell.availability?.fullDayBlocked
                                 ? "Journée bloquée"
@@ -236,7 +302,11 @@ export default function ClientCalendar({
           <span className="font-semibold text-zinc-500">Semaine grisée</span> : hors formule (autre parité ISO).
         </li>
         <li>
-          <span className="font-semibold text-zinc-600">Jour gris foncé</span> : date passée — non sélectionnable.
+          <span className="font-semibold text-zinc-600">Jour gris foncé</span> : date passée ou semaine déjà utilisée (P2C).
+        </li>
+        <li>
+          <span className="font-semibold text-white">P2C</span> : 2 projets max. / mois (créneau ou journée complète =
+          2 projets), semaines différentes si 2 créneaux.
         </li>
         <li>
           <span className="inline-block h-2 w-2 rounded border border-emerald-500/50 bg-emerald-950/30 align-middle" />{" "}
