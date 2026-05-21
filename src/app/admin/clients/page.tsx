@@ -86,7 +86,7 @@ function PasswordInput({
         )}
         aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
       >
-        {visible ? <EyeOff className="h-4 w-4" strokeWidth={2} /> : <Eye className="h-4 w-4" strokeWidth={2} />}
+        {visible ? <Eye className="h-4 w-4" strokeWidth={2} /> : <EyeOff className="h-4 w-4" strokeWidth={2} />}
       </button>
     </motion.div>
   );

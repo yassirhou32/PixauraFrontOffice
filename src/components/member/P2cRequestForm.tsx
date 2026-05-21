@@ -156,14 +156,14 @@ export function P2cRequestForm({
     const user = getUser();
     if (!user || user.role !== "client") return;
     setAuthToken(getToken());
-    if (!isEdit && !frozen && !sentLocked) {
+    if (!isEdit && !frozen && !sentLocked && p2cSlot !== 2) {
       setForm((prev) => ({
         ...prev,
         company: prev.company || user.client?.companyName || "",
         email: prev.email || user.email || "",
       }));
     }
-  }, [isEdit, frozen, sentLocked]);
+  }, [isEdit, frozen, sentLocked, p2cSlot]);
 
   useEffect(() => {
     if (!initialForm) return;

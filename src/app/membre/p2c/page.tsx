@@ -11,38 +11,15 @@ import { P2cRequestForm, type P2cFormState } from "@/components/member/P2cReques
 import { fetchP2cPageStatus, type P2cMonthStatus } from "@/lib/p2cStatus";
 import { FULL_DAY_SLOT_ID } from "@/lib/calendarClient";
 
-/** Projet 2 figé : infos Projet 1 + date et créneau du Projet 2. */
-function buildLockedP2Display(
-  p1: Partial<P2cFormState> | null | undefined,
-  p2: Partial<P2cFormState> | null | undefined
-): Partial<P2cFormState> | undefined {
+/** Projet 2 verrouillé : uniquement les données du Projet 2. */
+function buildLockedP2Display(p2: Partial<P2cFormState> | null | undefined): Partial<P2cFormState> | undefined {
   if (!p2) return undefined;
   const hasP2Data = Boolean(p2.requestedDate || p2.timeSlotId || p2.company?.trim());
   if (!hasP2Data) return undefined;
-  const base = (p1 && Object.keys(p1).length > 0 ? p1 : {}) as Partial<P2cFormState>;
   return {
-    ...base,
     ...p2,
     requestedDate: p2.requestedDate || "",
     timeSlotId: p2.timeSlotId || "",
-  };
-}
-
-function buildPrefillFromP1(source: Partial<P2cFormState> | null | undefined): Partial<P2cFormState> | undefined {
-  if (!source) return undefined;
-  return {
-    company: source.company,
-    mainContact: source.mainContact,
-    email: source.email,
-    phone: source.phone,
-    communicationAxis: source.communicationAxis,
-    projectDetails: source.projectDetails,
-    shootingAddress: source.shootingAddress,
-    technicalConstraints: source.technicalConstraints,
-    onsiteContact: source.onsiteContact,
-    freeComment: source.freeComment,
-    requestedDate: "",
-    timeSlotId: source.timeSlotId === FULL_DAY_SLOT_ID ? "" : source.timeSlotId || "",
   };
 }
 
@@ -91,16 +68,9 @@ export default function MembreP2CPage() {
   }, [status?.lockedProject1, p1Snapshot]);
 
   const lockedP2Form = useMemo((): Partial<P2cFormState> | undefined => {
-    const p1 = status?.lockedProject1 as Partial<P2cFormState> | null | undefined;
     const p2 = status?.lockedProject2 as Partial<P2cFormState> | null | undefined;
-    return buildLockedP2Display(p1, p2);
-  }, [status?.lockedProject1, status?.lockedProject2]);
-
-  const prefillP2 = useMemo(() => {
-    const fromApi = status?.prefillFromProject1 as Partial<P2cFormState> | null | undefined;
-    if (fromApi && Object.keys(fromApi).length > 0) return fromApi;
-    return buildPrefillFromP1(p1Snapshot);
-  }, [status?.prefillFromProject1, p1Snapshot]);
+    return buildLockedP2Display(p2);
+  }, [status?.lockedProject2]);
 
   const p2BlockedByFullDay = Boolean(
     status?.project1.isFullDay ||
@@ -137,7 +107,7 @@ export default function MembreP2CPage() {
         <Link href="/membre/demandes" className="text-violet-300 underline">
           Mes demandes
         </Link>
-        ). Projet 2 à droite : actif tant que le premier est envoyé.
+        ). Projet 2 à droite : formulaire vide à remplir après l&apos;envoi du Projet 1.
       </p>
 
       {loading ? (
@@ -207,7 +177,7 @@ export default function MembreP2CPage() {
                     sentLocked
                     initialForm={lockedP2Form}
                     title="Projet 2"
-                    subtitle="Demande envoyée — mêmes infos que le Projet 1, avec votre date et créneau du Projet 2."
+                    subtitle="Demande envoyée — formulaire verrouillé."
                   />
                   {status.project2.editable && status.project2.requestId ? (
                     <Link
@@ -229,10 +199,8 @@ export default function MembreP2CPage() {
                   key={`p2-${status.project1.requestId || "ready"}`}
                   p2cSlot={2}
                   wideColumn
-                  scheduleOnly
-                  initialForm={prefillP2 || undefined}
                   title="Projet 2"
-                  subtitle="Même formulaire que le Projet 1 — champs préremplis, choisissez date et créneau."
+                  subtitle="Deuxième projet du mois — tous les champs à remplir (axe, adresse, date, créneau…)."
                   submitLabel="Envoyer le Projet 2"
                   onSuccess={() => void loadPage()}
                 />
@@ -240,7 +208,6 @@ export default function MembreP2CPage() {
                 <P2cRequestForm
                   p2cSlot={2}
                   wideColumn
-                  scheduleOnly
                   frozen
                   title="Projet 2"
                   subtitle="S’active après l’envoi du Projet 1."
