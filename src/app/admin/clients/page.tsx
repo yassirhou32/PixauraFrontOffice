@@ -27,22 +27,87 @@ const inputClass =
 
 const labelClass = "text-[10px] font-mono uppercase tracking-[0.2em] text-neutral-500";
 
+type ClientFormFieldKey =
+  | "companyName"
+  | "headOfficeAddress"
+  | "siret"
+  | "managerName"
+  | "phone"
+  | "email"
+  | "clientType"
+  | "password";
+
+type ClientFormErrors = Partial<Record<ClientFormFieldKey, string>>;
+
+const REQUIRED_MSG = "Champ requis";
+
+const CLIENT_TYPE_VALUES = ["paire", "impaire", "vip"] as const;
+
 function Field({
   label,
   children,
   className,
+  error,
 }: {
   label: string;
   children: ReactNode;
   className?: string;
+  error?: string;
 }) {
   return (
-    <label className={cn("flex flex-col gap-2", className)}>
+    <div className={cn("flex flex-col gap-2", className)}>
       <span className={labelClass}>{label}</span>
       {children}
-    </label>
+      {error ? <p className="text-[11px] font-medium text-red-300">{error}</p> : null}
+    </div>
   );
 }
+
+function buildClientPayload(form: typeof defaultFormState, includePassword: boolean) {
+  return {
+    companyName: form.companyName.trim(),
+    headOfficeAddress: form.headOfficeAddress.trim(),
+    siret: form.siret.trim(),
+    managerName: form.managerName.trim(),
+    phone: form.phone.trim(),
+    email: form.email.trim(),
+    clientType: form.clientType,
+    notes: form.notes.trim(),
+    ...(includePassword ? { password: form.password } : {}),
+  };
+}
+
+const defaultFormState = {
+  companyName: "",
+  headOfficeAddress: "",
+  siret: "",
+  managerName: "",
+  phone: "",
+  email: "",
+  clientType: "paire",
+  notes: "",
+  password: "",
+};
+
+function validateClientForm(
+  form: typeof defaultFormState,
+  options: { requirePassword: boolean }
+): ClientFormErrors {
+  const errors: ClientFormErrors = {};
+  if (!form.companyName.trim()) errors.companyName = REQUIRED_MSG;
+  if (!form.headOfficeAddress.trim()) errors.headOfficeAddress = REQUIRED_MSG;
+  if (!form.siret.trim()) errors.siret = REQUIRED_MSG;
+  if (!form.managerName.trim()) errors.managerName = REQUIRED_MSG;
+  if (!form.phone.trim()) errors.phone = REQUIRED_MSG;
+  if (!form.email.trim()) errors.email = REQUIRED_MSG;
+  if (!form.clientType.trim() || !CLIENT_TYPE_VALUES.includes(form.clientType as (typeof CLIENT_TYPE_VALUES)[number])) {
+    errors.clientType = REQUIRED_MSG;
+  }
+  if (options.requirePassword && !form.password.trim()) errors.password = REQUIRED_MSG;
+  return errors;
+}
+
+const inputErrorClass = "border-red-400/70 focus:border-red-400/80 focus:ring-red-500/30";
 
 function PasswordInput({
   value,
@@ -51,6 +116,7 @@ function PasswordInput({
   required,
   disabled,
   autoComplete = "new-password",
+  hasError,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -58,13 +124,14 @@ function PasswordInput({
   required?: boolean;
   disabled?: boolean;
   autoComplete?: string;
+  hasError?: boolean;
 }) {
   const [visible, setVisible] = useState(false);
 
   return (
     <motion.div className="relative">
       <input
-        className={cn(inputClass, "pr-11")}
+        className={cn(inputClass, "pr-11", hasError && inputErrorClass)}
         placeholder={placeholder}
         type={visible ? "text" : "password"}
         autoComplete={autoComplete}
@@ -167,17 +234,17 @@ export default function AdminClientsPage() {
   const [feedback, setFeedback] = useState("");
   const [feedbackType, setFeedbackType] = useState<"success" | "error" | "info">("info");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    companyName: "",
-    headOfficeAddress: "",
-    siret: "",
-    managerName: "",
-    phone: "",
-    email: "",
-    clientType: "paire",
-    notes: "",
-    password: "",
-  });
+  const [form, setForm] = useState({ ...defaultFormState });
+  const [fieldErrors, setFieldErrors] = useState<ClientFormErrors>({});
+
+  function clearFieldError(key: keyof ClientFormErrors) {
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  }
 
   const load = () => apiFetch<any[]>("/clients", {}, token).then(setClients);
 
@@ -201,10 +268,21 @@ export default function AdminClientsPage() {
   async function submit(e: FormEvent) {
     e.preventDefault();
     setFeedback("");
+    const errors = validateClientForm(form, { requirePassword: true });
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors({});
     try {
-      await apiFetch("/clients", { method: "POST", body: JSON.stringify(form) }, token);
+      await apiFetch(
+        "/clients",
+        { method: "POST", body: JSON.stringify(buildClientPayload(form, true)) },
+        token
+      );
       showFeedback("Client créé avec succès.", "success");
-      setForm({ companyName: "", headOfficeAddress: "", siret: "", managerName: "", phone: "", email: "", clientType: "paire", notes: "", password: "" });
+      setForm({ ...defaultFormState });
+      setFieldErrors({});
       load();
     } catch (err: any) {
       showFeedback(err.message || "Erreur lors de la création du client.", "error");
@@ -212,6 +290,7 @@ export default function AdminClientsPage() {
   }
 
   function startEdit(client: any) {
+    setFieldErrors({});
     setEditingId(client._id);
     setForm({
       companyName: client.companyName || "",
@@ -231,27 +310,24 @@ export default function AdminClientsPage() {
     e.preventDefault();
     if (!editingId) return;
     setFeedback("");
+    const errors = validateClientForm(form, { requirePassword: false });
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors({});
     try {
       await apiFetch(
         `/clients/${editingId}`,
         {
           method: "PUT",
-          body: JSON.stringify({
-            companyName: form.companyName,
-            headOfficeAddress: form.headOfficeAddress,
-            siret: form.siret,
-            managerName: form.managerName,
-            phone: form.phone,
-            email: form.email,
-            clientType: form.clientType,
-            notes: form.notes,
-          }),
+          body: JSON.stringify(buildClientPayload(form, false)),
         },
         token
       );
       showFeedback("Client modifié avec succès.", "success");
       setEditingId(null);
-      setForm({ companyName: "", headOfficeAddress: "", siret: "", managerName: "", phone: "", email: "", clientType: "paire", notes: "", password: "" });
+      setForm({ ...defaultFormState });
       load();
     } catch (err: any) {
       showFeedback(err.message || "Erreur lors de la modification.", "error");
@@ -267,7 +343,7 @@ export default function AdminClientsPage() {
       showFeedback("Client supprimé avec succès.", "success");
       if (editingId === id) {
         setEditingId(null);
-        setForm({ companyName: "", headOfficeAddress: "", siret: "", managerName: "", phone: "", email: "", clientType: "paire", notes: "", password: "" });
+        setForm({ ...defaultFormState });
       }
       load();
     } catch (err: any) {
@@ -277,8 +353,9 @@ export default function AdminClientsPage() {
 
   function cancelEdit() {
     setEditingId(null);
+    setFieldErrors({});
     showFeedback("Modification annulée.", "info");
-    setForm({ companyName: "", headOfficeAddress: "", siret: "", managerName: "", phone: "", email: "", clientType: "paire", notes: "", password: "" });
+    setForm({ ...defaultFormState });
   }
 
   return (
@@ -297,70 +374,123 @@ export default function AdminClientsPage() {
           subtitle={editingId ? "Les champs sont préremplis — le mot de passe ne se modifie pas ici." : "Création du compte d'accès membre."}
           className="mb-10 border-white/10"
         >
-          <form onSubmit={editingId ? submitEdit : submit} className="grid gap-5 md:grid-cols-2">
-            <Field label="Entreprise *">
+          <form noValidate onSubmit={editingId ? submitEdit : submit} className="grid gap-5 md:grid-cols-2">
+            <Field label="Entreprise *" error={fieldErrors.companyName}>
               <input
-                className={inputClass}
+                className={cn(inputClass, fieldErrors.companyName && inputErrorClass)}
                 placeholder="Nom entreprise"
                 value={form.companyName}
-                onChange={(e) => setForm({ ...form, companyName: e.target.value })}
-                required
+                onChange={(e) => {
+                  clearFieldError("companyName");
+                  setForm({ ...form, companyName: e.target.value });
+                }}
+                aria-required
+                aria-invalid={Boolean(fieldErrors.companyName)}
               />
             </Field>
-            <Field label="Adresse du siège">
+            <Field label="Adresse du siège *" error={fieldErrors.headOfficeAddress}>
               <input
-                className={inputClass}
+                className={cn(inputClass, fieldErrors.headOfficeAddress && inputErrorClass)}
                 placeholder="Adresse complète"
                 value={form.headOfficeAddress}
-                onChange={(e) => setForm({ ...form, headOfficeAddress: e.target.value })}
+                onChange={(e) => {
+                  clearFieldError("headOfficeAddress");
+                  setForm({ ...form, headOfficeAddress: e.target.value });
+                }}
+                aria-required
+                aria-invalid={Boolean(fieldErrors.headOfficeAddress)}
               />
             </Field>
-            <Field label="SIRET">
-              <input className={inputClass} placeholder="Siret" value={form.siret} onChange={(e) => setForm({ ...form, siret: e.target.value })} />
-            </Field>
-            <Field label="Dirigeant / contact">
+            <Field label="SIRET *" error={fieldErrors.siret}>
               <input
-                className={inputClass}
+                className={cn(inputClass, fieldErrors.siret && inputErrorClass)}
+                placeholder="Siret"
+                value={form.siret}
+                onChange={(e) => {
+                  clearFieldError("siret");
+                  setForm({ ...form, siret: e.target.value });
+                }}
+                aria-required
+                aria-invalid={Boolean(fieldErrors.siret)}
+              />
+            </Field>
+            <Field label="Dirigeant / contact *" error={fieldErrors.managerName}>
+              <input
+                className={cn(inputClass, fieldErrors.managerName && inputErrorClass)}
                 placeholder="Nom du dirigeant"
                 value={form.managerName}
-                onChange={(e) => setForm({ ...form, managerName: e.target.value })}
+                onChange={(e) => {
+                  clearFieldError("managerName");
+                  setForm({ ...form, managerName: e.target.value });
+                }}
+                aria-required
+                aria-invalid={Boolean(fieldErrors.managerName)}
               />
             </Field>
-            <Field label="Téléphone">
-              <input className={inputClass} placeholder="+33…" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-            </Field>
-            <Field label="E-mail (identifiant connexion) *">
+            <Field label="Téléphone *" error={fieldErrors.phone}>
               <input
-                className={inputClass}
+                className={cn(inputClass, fieldErrors.phone && inputErrorClass)}
+                placeholder="+33…"
+                value={form.phone}
+                onChange={(e) => {
+                  clearFieldError("phone");
+                  setForm({ ...form, phone: e.target.value });
+                }}
+                aria-required
+                aria-invalid={Boolean(fieldErrors.phone)}
+              />
+            </Field>
+            <Field label="E-mail (identifiant connexion) *" error={fieldErrors.email}>
+              <input
+                className={cn(inputClass, fieldErrors.email && inputErrorClass)}
                 placeholder="contact@entreprise.fr"
                 type="email"
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                required
+                onChange={(e) => {
+                  clearFieldError("email");
+                  setForm({ ...form, email: e.target.value });
+                }}
+                aria-required
+                aria-invalid={Boolean(fieldErrors.email)}
               />
             </Field>
-            <Field label="Règle calendrier (P2C)">
-              <select className={cn(inputClass, "cursor-pointer")} value={form.clientType} onChange={(e) => setForm({ ...form, clientType: e.target.value })}>
+            <Field label="Règle calendrier (P2C) *" error={fieldErrors.clientType}>
+              <select
+                className={cn(inputClass, "cursor-pointer", fieldErrors.clientType && inputErrorClass)}
+                value={form.clientType}
+                onChange={(e) => {
+                  clearFieldError("clientType");
+                  setForm({ ...form, clientType: e.target.value });
+                }}
+                aria-required
+                aria-invalid={Boolean(fieldErrors.clientType)}
+              >
                 <option value="paire">Semaine paire</option>
                 <option value="impaire">Semaine impaire</option>
                 <option value="vip">VIP</option>
               </select>
             </Field>
-            <Field label={editingId ? "Mot de passe" : "Mot de passe initial *"}>
+            <Field label={editingId ? "Mot de passe" : "Mot de passe initial *"} error={!editingId ? fieldErrors.password : undefined}>
               <PasswordInput
                 placeholder={editingId ? "inchangé depuis cet écran" : "Mot de passe transmis au client"}
                 value={form.password}
-                onChange={(password) => setForm({ ...form, password })}
-                required={!editingId}
+                onChange={(password) => {
+                  clearFieldError("password");
+                  setForm({ ...form, password });
+                }}
+                required={false}
                 disabled={!!editingId}
+                hasError={Boolean(!editingId && fieldErrors.password)}
               />
             </Field>
-            <Field label="Notes internes" className="md:col-span-2">
+            <Field label="Notes internes (facultatif)" className="md:col-span-2">
               <textarea
                 className={cn(inputClass, "min-h-[100px] resize-y py-3")}
-                placeholder="Informations utiles pour l'équipe…"
+                placeholder="Informations utiles pour l'équipe… (facultatif)"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                required={false}
+                aria-required={false}
               />
             </Field>
 
@@ -374,7 +504,9 @@ export default function AdminClientsPage() {
                   Annuler
                 </button>
               ) : (
-                <span className="order-2 hidden text-[11px] text-neutral-600 md:order-1 md:inline">Les champs * sont obligatoires.</span>
+                <span className="order-2 hidden text-[11px] text-neutral-600 md:order-1 md:inline">
+                  Tous les champs * sont obligatoires. Seules les notes internes sont facultatives.
+                </span>
               )}
               <button
                 type="submit"
