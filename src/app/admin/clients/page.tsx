@@ -19,13 +19,13 @@ import { apiFetch } from "@/lib/api";
 import { getToken, getUser } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { AdminY2KLayout, ChromeCard } from "@/components/admin/Y2KAdminLayout";
-import { clientTypePill } from "@/components/admin/demandeUi";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "h-11 w-full rounded-xl border border-white/12 bg-black/45 px-3.5 text-sm text-white outline-none transition-colors placeholder:text-neutral-600 focus:border-violet-400/50 focus:ring-1 focus:ring-violet-500/25 disabled:cursor-not-allowed disabled:opacity-45";
+  "h-12 w-full rounded-xl border border-white/15 bg-black/50 px-4 text-base text-white outline-none transition-colors placeholder:text-neutral-500 focus:border-violet-400/55 focus:ring-2 focus:ring-violet-500/20 disabled:cursor-not-allowed disabled:opacity-45 sm:h-[3.25rem]";
 
-const labelClass = "text-[10px] font-mono uppercase tracking-[0.2em] text-neutral-500";
+const labelClass =
+  "text-xs font-semibold uppercase tracking-[0.12em] text-neutral-300 sm:text-sm sm:tracking-[0.14em]";
 
 type ClientFormFieldKey =
   | "companyName"
@@ -58,7 +58,7 @@ function Field({
     <div className={cn("flex flex-col gap-2", className)}>
       <span className={labelClass}>{label}</span>
       {children}
-      {error ? <p className="text-[11px] font-medium text-red-300">{error}</p> : null}
+      {error ? <p className="text-xs font-medium text-red-300 sm:text-sm">{error}</p> : null}
     </div>
   );
 }
@@ -131,7 +131,7 @@ function PasswordInput({
   return (
     <motion.div className="relative">
       <input
-        className={cn(inputClass, "pr-11", hasError && inputErrorClass)}
+        className={cn(inputClass, "pr-12", hasError && inputErrorClass)}
         placeholder={placeholder}
         type={visible ? "text" : "password"}
         autoComplete={autoComplete}
@@ -159,6 +159,52 @@ function PasswordInput({
   );
 }
 
+const CALENDAR_RULE_LABEL: Record<string, string> = {
+  paire: "Semaine paire",
+  impaire: "Semaine impaire",
+  vip: "VIP",
+};
+
+function ClientContactRow({
+  icon: Icon,
+  label,
+  value,
+  accent,
+}: {
+  icon: typeof Mail;
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="flex gap-4 sm:gap-5">
+      <span
+        className={cn(
+          "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]",
+          accent
+            ? "border-indigo-400/25 bg-indigo-500/12 text-indigo-200"
+            : "border-white/10 bg-white/[0.04] text-neutral-300"
+        )}
+      >
+        <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+      </span>
+      <div className="min-w-0 flex-1 space-y-1.5 pt-0.5">
+        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-500 sm:text-[11px]">
+          {label}
+        </p>
+        <p
+          className={cn(
+            "break-words text-[15px] leading-snug text-neutral-100 sm:text-base",
+            label === "SIRET" && "font-mono tracking-wide text-neutral-200"
+          )}
+        >
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function ClientCard({
   client,
   onEdit,
@@ -168,60 +214,61 @@ function ClientCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const ruleLabel = CALENDAR_RULE_LABEL[client.clientType] || client.clientType || "—";
+
   return (
-    <ChromeCard className="group h-full border-white/10 transition-all duration-300 hover:border-white/18 hover:shadow-[0_20px_50px_-28px_rgba(99,102,241,0.35)]">
-      <div className="flex h-full flex-col gap-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5 text-violet-300/90 ring-1 ring-white/10 transition-colors group-hover:bg-violet-500/15 group-hover:text-violet-200">
-                <Building2 className="h-4 w-4" strokeWidth={1.75} />
-              </span>
-              <h3 className="truncate text-lg font-black uppercase tracking-tight text-white md:text-xl">{client.companyName}</h3>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 pl-[2.25rem]">
-              {clientTypePill(client.clientType)}
-            </div>
+    <ChromeCard
+      innerClassName="!p-0"
+      className={cn(
+        "group h-full overflow-hidden",
+        "border border-white/[0.08] bg-neutral-950/70",
+        "shadow-[0_4px_24px_-8px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.04)_inset]",
+        "transition-all duration-500 ease-out",
+        "hover:border-indigo-400/20 hover:shadow-[0_28px_64px_-24px_rgba(79,70,229,0.45),0_0_0_1px_rgba(129,140,248,0.12)_inset]"
+      )}
+    >
+      <div className="pointer-events-none h-px w-full bg-gradient-to-r from-transparent via-indigo-400/50 to-transparent opacity-80" />
+
+      <div className="flex h-full flex-col px-6 py-7 sm:px-8 sm:py-9">
+        <header className="flex items-start gap-5 sm:gap-6">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-violet-400/20 bg-gradient-to-br from-violet-600/25 to-indigo-950/80 text-violet-100 shadow-[0_8px_24px_-12px_rgba(99,102,241,0.55),inset_0_1px_0_rgba(255,255,255,0.12)] transition-transform duration-500 group-hover:scale-[1.02]">
+            <Building2 className="h-5 w-5" strokeWidth={1.5} />
+          </span>
+          <div className="min-w-0 flex-1 space-y-4">
+            <h3 className="text-xl font-black uppercase leading-[1.15] tracking-[0.02em] text-white sm:text-[1.65rem]">
+              {client.companyName}
+            </h3>
+            <span className="inline-flex items-center gap-2 rounded-full border border-violet-400/25 bg-violet-950/60 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400 shadow-[0_0_8px_rgba(167,139,250,0.9)]" aria-hidden />
+              {ruleLabel}
+            </span>
           </div>
+        </header>
+
+        <div className="my-8 space-y-6 rounded-2xl border border-white/[0.07] bg-gradient-to-b from-white/[0.045] via-white/[0.02] to-transparent px-5 py-6 sm:my-9 sm:space-y-7 sm:px-6 sm:py-7">
+          <ClientContactRow icon={Mail} label="E-mail" value={client.email || "—"} accent />
+          {client.phone ? <ClientContactRow icon={Phone} label="Téléphone" value={client.phone} /> : null}
+          {client.siret ? <ClientContactRow icon={Hash} label="SIRET" value={client.siret} /> : null}
         </div>
 
-        <div className="space-y-2.5 rounded-xl border border-white/6 bg-black/30 px-3.5 py-3">
-          <div className="flex items-center gap-2.5 text-xs text-neutral-300">
-            <Mail className="h-3.5 w-3.5 shrink-0 text-indigo-300/80" strokeWidth={2} />
-            <span className="min-w-0 truncate font-mono text-[13px] text-neutral-200">{client.email}</span>
-          </div>
-          {client.phone ? (
-            <div className="flex items-center gap-2.5 text-xs text-neutral-400">
-              <Phone className="h-3.5 w-3.5 shrink-0 text-neutral-500" strokeWidth={2} />
-              <span className="font-mono text-[12px]">{client.phone}</span>
-            </div>
-          ) : null}
-          {client.siret ? (
-            <div className="flex items-center gap-2.5 text-xs text-neutral-500">
-              <Hash className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-              <span className="font-mono text-[11px] tracking-wide">{client.siret}</span>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="mt-auto flex flex-wrap gap-2 border-t border-white/6 pt-4">
+        <footer className="mt-auto grid grid-cols-1 gap-3 border-t border-white/[0.06] pt-7 sm:grid-cols-2 sm:gap-4 sm:pt-8">
           <button
             type="button"
             onClick={onEdit}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/18 bg-white/[0.04] px-3 py-2.5 text-xs font-bold uppercase tracking-widest text-white transition-all hover:border-white/30 hover:bg-white/[0.08] min-[420px]:flex-none min-[420px]:px-5"
+            className="inline-flex items-center justify-center gap-2.5 rounded-xl border border-white/15 bg-white/[0.04] px-5 py-3.5 text-sm font-semibold uppercase tracking-[0.08em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-300 hover:border-white/28 hover:bg-white/[0.09] active:scale-[0.99]"
           >
-            <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+            <Pencil className="h-4 w-4 opacity-90" strokeWidth={1.75} />
             Modifier
           </button>
           <button
             type="button"
             onClick={onDelete}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-400/35 bg-red-500/10 px-3 py-2.5 text-xs font-bold uppercase tracking-widest text-red-100 transition-all hover:border-red-400/55 hover:bg-red-500/20 min-[420px]:flex-none min-[420px]:px-5"
+            className="inline-flex items-center justify-center gap-2.5 rounded-xl border border-red-500/25 bg-red-950/40 px-5 py-3.5 text-sm font-semibold uppercase tracking-[0.08em] text-red-100/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-all duration-300 hover:border-red-400/40 hover:bg-red-950/65 active:scale-[0.99]"
           >
-            <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+            <Trash2 className="h-4 w-4 opacity-90" strokeWidth={1.75} />
             Supprimer
           </button>
-        </div>
+        </footer>
       </div>
     </ChromeCard>
   );
@@ -364,7 +411,7 @@ export default function AdminClientsPage() {
         <header className="mb-8 flex flex-col gap-2">
           <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-violet-300/80">Annuaire</p>
           <h1 className="text-4xl font-black tracking-tight text-white md:text-5xl">Clients</h1>
-          <p className="max-w-2xl text-sm text-neutral-400">
+          <p className="max-w-2xl text-base leading-relaxed text-neutral-300">
             Création d&apos;accès espace membre, profil semaine (paire / impaire / VIP) et suivi des coordonnées.
           </p>
         </header>
@@ -373,8 +420,9 @@ export default function AdminClientsPage() {
           title={editingId ? "Modifier le client" : "Nouveau client"}
           subtitle={editingId ? "Les champs sont préremplis — le mot de passe ne se modifie pas ici." : "Création du compte d'accès membre."}
           className="mb-10 border-white/10"
+          innerClassName="p-5 sm:p-7 md:p-8"
         >
-          <form noValidate onSubmit={editingId ? submitEdit : submit} className="grid gap-5 md:grid-cols-2">
+          <form noValidate onSubmit={editingId ? submitEdit : submit} className="grid gap-6 md:grid-cols-2 md:gap-7">
             <Field label="Entreprise *" error={fieldErrors.companyName}>
               <input
                 className={cn(inputClass, fieldErrors.companyName && inputErrorClass)}
@@ -485,7 +533,7 @@ export default function AdminClientsPage() {
             </Field>
             <Field label="Notes internes (facultatif)" className="md:col-span-2">
               <textarea
-                className={cn(inputClass, "min-h-[100px] resize-y py-3")}
+                className={cn(inputClass, "min-h-[120px] resize-y py-3.5 leading-relaxed")}
                 placeholder="Informations utiles pour l'équipe… (facultatif)"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -504,13 +552,13 @@ export default function AdminClientsPage() {
                   Annuler
                 </button>
               ) : (
-                <span className="order-2 hidden text-[11px] text-neutral-600 md:order-1 md:inline">
+                <span className="order-2 hidden text-sm text-neutral-400 md:order-1 md:inline">
                   Tous les champs * sont obligatoires. Seules les notes internes sont facultatives.
                 </span>
               )}
               <button
                 type="submit"
-                className="order-1 inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-300/35 bg-gradient-to-r from-indigo-600/35 via-violet-600/28 to-indigo-600/35 px-6 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-white shadow-[0_0_28px_-8px_rgba(99,102,241,0.45)] transition-all hover:border-indigo-200/45 hover:from-indigo-500/45 hover:to-violet-500/35 md:order-2 md:min-w-[280px]"
+                className="order-1 inline-flex items-center justify-center gap-2.5 rounded-xl border border-indigo-300/35 bg-gradient-to-r from-indigo-600/35 via-violet-600/28 to-indigo-600/35 px-6 py-4 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_28px_-8px_rgba(99,102,241,0.45)] transition-all hover:border-indigo-200/45 hover:from-indigo-500/45 hover:to-violet-500/35 md:order-2 md:min-w-[280px]"
               >
                 {editingId ? (
                   <>
@@ -528,14 +576,16 @@ export default function AdminClientsPage() {
           </form>
         </ChromeCard>
 
-        <div className="mb-4 flex items-end justify-between gap-4">
+        <div className="mb-6 flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold uppercase tracking-wide text-white">Clients enregistrés</h2>
-            <p className="mt-1 text-xs text-neutral-500">{clients.length} fiche{clients.length !== 1 ? "s" : ""}</p>
+            <h2 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Clients enregistrés</h2>
+            <p className="mt-1.5 text-sm text-neutral-400 sm:text-base">
+              {clients.length} fiche{clients.length !== 1 ? "s" : ""}
+            </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-9 lg:gap-10 xl:gap-12">
           {clients.map((c, i) => (
             <motion.div
               key={c._id}

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import { getToken, getUser } from "@/lib/auth";
+import { MemberCinematicHero } from "@/components/member/MemberBrandImagery";
 import { MemberY2KLayout } from "@/components/member/MemberY2KLayout";
 import { P2cRequestForm, requestToFormState } from "@/components/member/P2cRequestForm";
 
@@ -66,9 +67,12 @@ export default function ModifierDemandePage() {
           ← Mes demandes
         </Link>
       </p>
-      <h2 className="mb-6 bg-gradient-to-b from-white to-white/60 bg-clip-text text-2xl font-black tracking-tight text-transparent sm:text-3xl">
-        Modifier ma demande
-      </h2>
+      <MemberCinematicHero
+        className="mb-8"
+        eyebrow="Modification"
+        title="Mettre à jour ma demande"
+        description="Ajustez vos coordonnées, votre projet ou votre créneau — Pixaura traite votre dossier dès validation."
+      />
       <P2cRequestForm
         requestId={id}
         p2cSlot={p2cSlot}

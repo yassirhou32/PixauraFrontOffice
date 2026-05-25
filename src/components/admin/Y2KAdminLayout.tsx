@@ -167,11 +167,11 @@ export function ChromeCard({
           <div className="mb-4 flex items-start justify-between gap-3 sm:mb-6">
             <div className="min-w-0 flex-1">
               {title && (
-                <h3 className="break-words text-lg font-bold uppercase leading-snug tracking-tight text-white sm:text-xl">
+                <h3 className="break-words text-xl font-bold uppercase leading-snug tracking-tight text-white sm:text-2xl">
                   {title}
                 </h3>
               )}
-              {subtitle && <p className="mt-1 font-mono text-xs text-neutral-400">{subtitle}</p>}
+              {subtitle && <p className="mt-2 text-sm leading-relaxed text-neutral-300 sm:text-base">{subtitle}</p>}
             </div>
             <MoreVertical className="h-5 w-5 shrink-0 cursor-pointer text-neutral-500 hover:text-white" />
           </div>

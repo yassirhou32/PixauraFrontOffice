@@ -7,6 +7,7 @@ import ClientCalendar from "@/components/ClientCalendar";
 import { apiFetch } from "@/lib/api";
 import { getToken, getUser } from "@/lib/auth";
 import { ChromeCard } from "@/components/admin/Y2KAdminLayout";
+import { MemberContactPanel } from "@/components/member/MemberBrandImagery";
 import { ShootingLocationInput, isShootingCityValid } from "@/components/forms/ShootingLocationInput";
 import { COMMUNICATION_AXES, isValidCommunicationAxis } from "@/lib/communicationAxes";
 import {
@@ -316,55 +317,59 @@ export function P2cRequestForm({
               {p2cSlot === 1 ? " ou la journée complète" : ""}.
             </p>
           ) : null}
-          <input
-            className={
-              lockInfo
-                ? lockedFieldClass
-                : "box-border h-11 w-full min-w-0 rounded-lg border border-white/12 bg-black/45 px-3 text-[15px] text-white outline-none placeholder:text-neutral-600 focus:border-violet-400/40"
-            }
-            placeholder="Entreprise"
-            value={form.company}
-            readOnly={lockInfo}
-            onChange={(e) => setForm((prev) => ({ ...prev, company: e.target.value }))}
-            required
-          />
-          <input
-            className={
-              lockInfo
-                ? lockedFieldClass
-                : "box-border h-11 w-full min-w-0 rounded-lg border border-white/12 bg-black/45 px-3 text-[15px] text-white outline-none placeholder:text-neutral-600 focus:border-violet-400/40"
-            }
-            placeholder="Contact principal"
-            value={form.mainContact}
-            readOnly={lockInfo}
-            onChange={(e) => setForm((prev) => ({ ...prev, mainContact: e.target.value }))}
-            required
-          />
-          <input
-            className={
-              lockInfo
-                ? lockedFieldClass
-                : "box-border h-11 w-full min-w-0 rounded-lg border border-white/12 bg-black/45 px-3 text-[15px] text-white outline-none placeholder:text-neutral-600 focus:border-violet-400/40"
-            }
-            placeholder="Email"
-            type="email"
-            value={form.email}
-            readOnly={lockInfo}
-            onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-            required
-          />
-          <input
-            className={
-              lockInfo
-                ? lockedFieldClass
-                : "box-border h-11 w-full min-w-0 rounded-lg border border-white/12 bg-black/45 px-3 text-[15px] text-white outline-none placeholder:text-neutral-600 focus:border-violet-400/40"
-            }
-            placeholder="Telephone"
-            value={form.phone}
-            readOnly={lockInfo}
-            onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
-            required
-          />
+          <MemberContactPanel className="md:col-span-2" compact={wideColumn}>
+            <div className="grid min-w-0 gap-3 md:grid-cols-2">
+              <input
+                className={
+                  lockInfo
+                    ? lockedFieldClass
+                    : "box-border h-11 w-full min-w-0 rounded-lg border border-white/12 bg-black/45 px-3 text-[15px] text-white outline-none placeholder:text-neutral-600 focus:border-violet-400/40"
+                }
+                placeholder="Entreprise"
+                value={form.company}
+                readOnly={lockInfo}
+                onChange={(e) => setForm((prev) => ({ ...prev, company: e.target.value }))}
+                required
+              />
+              <input
+                className={
+                  lockInfo
+                    ? lockedFieldClass
+                    : "box-border h-11 w-full min-w-0 rounded-lg border border-white/12 bg-black/45 px-3 text-[15px] text-white outline-none placeholder:text-neutral-600 focus:border-violet-400/40"
+                }
+                placeholder="Contact principal"
+                value={form.mainContact}
+                readOnly={lockInfo}
+                onChange={(e) => setForm((prev) => ({ ...prev, mainContact: e.target.value }))}
+                required
+              />
+              <input
+                className={
+                  lockInfo
+                    ? lockedFieldClass
+                    : "box-border h-11 w-full min-w-0 rounded-lg border border-white/12 bg-black/45 px-3 text-[15px] text-white outline-none placeholder:text-neutral-600 focus:border-violet-400/40"
+                }
+                placeholder="Email"
+                type="email"
+                value={form.email}
+                readOnly={lockInfo}
+                onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                required
+              />
+              <input
+                className={
+                  lockInfo
+                    ? lockedFieldClass
+                    : "box-border h-11 w-full min-w-0 rounded-lg border border-white/12 bg-black/45 px-3 text-[15px] text-white outline-none placeholder:text-neutral-600 focus:border-violet-400/40"
+                }
+                placeholder="Telephone"
+                value={form.phone}
+                readOnly={lockInfo}
+                onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
+                required
+              />
+            </div>
+          </MemberContactPanel>
           <select
             className={
               lockInfo

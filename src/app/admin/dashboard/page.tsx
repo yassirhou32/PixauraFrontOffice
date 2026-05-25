@@ -23,6 +23,13 @@ import { getToken, getUser } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { AdminY2KLayout, ChromeCard } from "@/components/admin/Y2KAdminLayout";
+import GalleryDiagonalMarquee from "@/components/admin/GalleryDiagonalMarquee";
+import {
+  StatusBadge,
+  axisLabelFr,
+  clientTypePill,
+  formatRequestDateShort,
+} from "@/components/admin/demandeUi";
 
 type DashboardStats = {
   total: number;
@@ -136,6 +143,167 @@ function buildRadarRows(requests: RequestRow[], clientsActifs: number): { subjec
   return rawRows.map((r) => ({ subject: r.subject, raw: r.raw, A: (r.raw / max) * 100 }));
 }
 
+const CHART_PERIODS = [
+  { id: "daily" as const, label: "Jour" },
+  { id: "monthly" as const, label: "Mois" },
+  { id: "yearly" as const, label: "Année" },
+];
+
+function ChartPeriodPicker({
+  value,
+  onChange,
+  className,
+}: {
+  value: "daily" | "monthly" | "yearly";
+  onChange: (id: "daily" | "monthly" | "yearly") => void;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex w-full min-w-0 gap-1 rounded-xl border border-white/15 bg-black/35 p-1 sm:w-auto sm:gap-1.5",
+        className
+      )}
+      role="group"
+      aria-label="Période du graphique"
+    >
+      {CHART_PERIODS.map(({ id, label }) => (
+        <button
+          key={id}
+          type="button"
+          onClick={() => onChange(id)}
+          className={cn(
+            "min-h-[36px] flex-1 rounded-lg px-3 py-2 text-[10px] font-mono font-semibold uppercase tracking-wider transition-colors sm:min-h-0 sm:flex-none sm:px-4 sm:py-2 sm:text-[11px]",
+            value === id
+              ? "bg-white text-black shadow-[0_0_16px_rgba(255,255,255,0.12)]"
+              : "text-neutral-400 hover:bg-white/10 hover:text-white"
+          )}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+type JournalRequest = {
+  _id: string;
+  status: string;
+  requestedDate: string;
+  communicationAxis?: string;
+  client?: { companyName?: string; clientType?: string };
+};
+
+function RequestJournal({ requests }: { requests: JournalRequest[] }) {
+  if (requests.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center px-6 py-16 text-center sm:py-20">
+        <p className="font-mono text-sm text-neutral-500">Aucune demande enregistrée pour le moment.</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <ul className="flex flex-col gap-3 p-4 sm:hidden">
+        {requests.map((log) => (
+          <li
+            key={log._id}
+            className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-transparent p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="min-w-0 flex-1 text-base font-bold leading-snug text-indigo-300">
+                {log.client?.companyName || "—"}
+              </p>
+              <StatusBadge status={log.status} className="shrink-0 text-[10px]" />
+            </div>
+            <dl className="mt-4 grid grid-cols-2 gap-x-3 gap-y-3 font-mono text-[11px]">
+              <div>
+                <dt className="text-neutral-500">Type</dt>
+                <dd className="mt-1">{clientTypePill(log.client?.clientType)}</dd>
+              </div>
+              <div>
+                <dt className="text-neutral-500">Date</dt>
+                <dd className="mt-1 text-neutral-200">{formatRequestDateShort(log.requestedDate)}</dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-neutral-500">Axe</dt>
+                <dd className="mt-1 text-neutral-200">{axisLabelFr(log.communicationAxis || "")}</dd>
+              </div>
+            </dl>
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden min-h-0 flex-1 overflow-auto sm:block">
+        <table className="w-full min-w-0 text-left">
+          <thead className="sticky top-0 z-10 border-b border-white/10 bg-neutral-950/95 backdrop-blur-md">
+            <tr>
+              <th className="py-4 pl-6 pr-4 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 md:py-5 md:pl-10">
+                Client
+              </th>
+              <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 md:py-5">
+                Type
+              </th>
+              <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 md:py-5">
+                Date
+              </th>
+              <th className="hidden px-4 py-4 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 md:table-cell md:py-5">
+                Axe
+              </th>
+              <th className="py-4 pl-4 pr-6 text-right text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 md:py-5 md:pr-10">
+                Statut
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {requests.map((log, rowIdx) => (
+              <tr
+                key={log._id}
+                className={cn(
+                  "border-b border-white/[0.06] transition-colors last:border-0 hover:bg-white/[0.05]",
+                  rowIdx % 2 === 1 && "bg-white/[0.02]"
+                )}
+              >
+                <td className="py-4 pl-6 pr-4 md:py-5 md:pl-10">
+                  <span className="text-sm font-semibold text-indigo-300 md:text-[15px]">
+                    {log.client?.companyName || "—"}
+                  </span>
+                </td>
+                <td className="px-4 py-4 md:py-5">{clientTypePill(log.client?.clientType)}</td>
+                <td className="whitespace-nowrap px-4 py-4 font-mono text-sm text-neutral-300 md:py-5">
+                  {formatRequestDateShort(log.requestedDate)}
+                </td>
+                <td className="hidden px-4 py-4 text-sm text-neutral-300 md:table-cell md:py-5">
+                  {axisLabelFr(log.communicationAxis || "")}
+                </td>
+                <td className="py-4 pl-4 pr-6 text-right md:py-5 md:pr-10">
+                  <StatusBadge status={log.status} className="ml-auto inline-flex" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+function TelemetryLegend() {
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-4 gap-y-2 font-mono text-[10px] uppercase tracking-wide text-neutral-400 sm:justify-start sm:text-[11px]">
+      <span className="inline-flex items-center gap-2">
+        <span className="h-0.5 w-6 rounded-full bg-white" />
+        Demandes créées
+      </span>
+      <span className="inline-flex items-center gap-2">
+        <span className="h-0.5 w-6 rounded-full border-t-2 border-dashed border-indigo-400" />
+        Validées
+      </span>
+    </div>
+  );
+}
+
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [chartPeriod, setChartPeriod] = useState<"daily" | "monthly" | "yearly">("monthly");
@@ -164,53 +332,75 @@ export default function AdminDashboardPage() {
     [requests, stats?.clientsActifs]
   );
 
+  const cardShell =
+    "rounded-[1.75rem] border border-white/[0.12] bg-neutral-900/55 shadow-[0_20px_64px_-32px_rgba(0,0,0,0.88)] ring-1 ring-white/[0.06] sm:rounded-[1.85rem] md:rounded-[2rem] md:border-white/[0.14] md:shadow-[0_28px_90px_-40px_rgba(0,0,0,0.9)]";
+  const cardInner = "p-5 sm:p-6 md:p-8 lg:p-9";
+  const chartPanel =
+    "overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-b from-black/35 via-black/20 to-transparent p-2 sm:p-4 md:p-5";
+
   return (
     <AdminY2KLayout>
-      <div className="flex h-full min-h-0 flex-col">
-      <header className="mb-4 shrink-0 sm:mb-6 md:mb-8">
-        <div className="min-w-0">
-          <h1 className="mb-1 text-3xl font-black leading-tight tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 sm:mb-2 sm:text-4xl md:text-5xl lg:text-6xl">
-            PIXAURA
-          </h1>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[10px] uppercase tracking-widest text-neutral-400 sm:text-xs">
-            <div className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-green-400 shadow-[0_0_10px_#4ade80]" />
-            <span className="min-w-0">Backoffice connecté</span>
-            <span className="text-neutral-600">|</span>
-            <span>v.1.0.0</span>
+      <div className="flex h-full min-h-0 flex-col md:max-w-[1680px] md:mx-auto md:w-full">
+      <header className="mb-4 shrink-0 sm:mb-6 md:mb-10 lg:mb-12">
+        <div className="min-w-0 md:flex md:items-end md:justify-between md:gap-8">
+          <div>
+            <p className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.3em] text-violet-300/80 sm:mb-2 sm:text-[11px] sm:tracking-[0.35em]">
+              Tableau de bord
+            </p>
+            <h1 className="mb-1 text-3xl font-black leading-tight tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 sm:mb-2 sm:text-4xl md:text-5xl lg:text-6xl">
+              PIXAURA
+            </h1>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[10px] uppercase tracking-widest text-neutral-400 sm:text-xs md:mt-3 md:gap-x-3">
+              <div className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-green-400 shadow-[0_0_10px_#4ade80]" />
+              <span className="min-w-0">Backoffice connecté</span>
+              <span className="text-neutral-600">|</span>
+              <span>v.1.0.0</span>
+            </div>
           </div>
+          <p className="mt-2 max-w-md text-xs leading-relaxed text-neutral-500 sm:text-sm md:mt-0 md:text-right">
+            Vue synthétique des demandes P2C, validations et activité clients.
+          </p>
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl pb-8 pr-1 scrollbar-none sm:rounded-[32px] sm:pr-2 sm:pb-10">
-        <div className="flex flex-col gap-6 pb-4 sm:gap-10">
+      <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl pb-8 pr-1 scrollbar-none sm:rounded-[32px] sm:pr-2 sm:pb-10 md:rounded-[2.5rem] md:pb-14 md:pr-4">
+        <div className="flex flex-col gap-5 pb-4 sm:gap-7 md:gap-10 lg:gap-12">
               {/*
                 Mobile : une carte = une ligne (évite grille / h-full qui écrase sous Safari).
                 md+ : grille desktop inchangée.
               */}
-              <div className="flex shrink-0 flex-col gap-6 md:grid md:grid-cols-2 md:gap-6 lg:grid-cols-4">
+              <div className="flex shrink-0 flex-col gap-5 sm:gap-6 md:grid md:grid-cols-2 md:gap-8 lg:grid-cols-4 lg:gap-10">
                 <ChromeCard
-                  className="w-full min-w-0 shrink-0 md:col-span-2 md:min-h-0 bg-gradient-to-r from-indigo-900/30 to-purple-900/30"
+                  className={cn(
+                    "w-full min-w-0 shrink-0 bg-gradient-to-br from-indigo-950/50 via-neutral-900/40 to-purple-950/40",
+                    "md:col-span-2 md:min-h-[220px] lg:min-h-[248px]",
+                    cardShell,
+                    "ring-indigo-500/10 md:ring-indigo-500/15"
+                  )}
+                  innerClassName={cardInner}
                   title="Demandes totales"
                   subtitle="Vue opérationnelle"
                 >
-                  <div className="relative z-10 flex min-h-0 flex-col gap-6 sm:h-full sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-                    <div className="flex min-h-0 flex-col justify-between gap-4 sm:h-full sm:gap-0">
-                      <div className="flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 backdrop-blur-md">
-                        <Zap className="h-4 w-4 shrink-0 text-yellow-300" />
-                        <span className="text-xs font-bold uppercase">Total demandes</span>
+                  <div className="relative z-10 flex min-h-0 flex-col gap-6 sm:h-full sm:flex-row sm:items-start sm:justify-between sm:gap-4 md:gap-8">
+                    <div className="flex min-h-0 flex-col justify-between gap-4 sm:h-full sm:gap-0 md:py-1">
+                      <div className="flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 backdrop-blur-md md:px-4 md:py-1.5">
+                        <Zap className="h-4 w-4 shrink-0 text-yellow-300 md:h-5 md:w-5" />
+                        <span className="text-xs font-bold uppercase md:text-[13px]">Total demandes</span>
                       </div>
                       <div>
-                        <h2 className="text-4xl font-black tracking-tighter text-glow sm:text-5xl md:text-6xl">{stats?.total ?? 0}</h2>
-                        <p className="mt-2 font-mono text-neutral-400">P2C enregistrés</p>
+                        <h2 className="text-4xl font-black tracking-tighter text-glow sm:text-5xl md:text-6xl lg:text-7xl">
+                          {stats?.total ?? 0}
+                        </h2>
+                        <p className="mt-2 font-mono text-neutral-400 md:mt-4 md:text-sm">P2C enregistrés</p>
                       </div>
                     </div>
-                    <div className="flex shrink-0 items-end justify-center gap-1 self-center sm:h-full sm:self-end sm:justify-end">
+                    <div className="flex shrink-0 items-end justify-center gap-1 self-center sm:h-full sm:self-end sm:justify-end md:gap-1.5">
                       {[...Array(8)].map((_, i) => (
                         <motion.div
                           key={i}
                           animate={{ height: [20, 60, 20] }}
                           transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1, ease: "easeInOut" }}
-                          className="w-3 rounded-t-full bg-white/20 sm:w-4"
+                          className="w-3 rounded-t-full bg-gradient-to-t from-indigo-400/30 to-white/25 sm:w-4 md:w-[18px]"
                         />
                       ))}
                     </div>
@@ -218,62 +408,97 @@ export default function AdminDashboardPage() {
                 </ChromeCard>
 
                 {[
-                  { label: "Clients actifs", val: String(stats?.clientsActifs ?? 0), trend: "en ligne" },
-                  { label: "En attente", val: String(stats?.en_attente ?? 0), trend: "à traiter" },
+                  {
+                    label: "Clients actifs",
+                    val: String(stats?.clientsActifs ?? 0),
+                    trend: "en ligne",
+                    accent: "from-emerald-500/20 to-transparent",
+                    bar: "bg-emerald-400/90",
+                  },
+                  {
+                    label: "En attente",
+                    val: String(stats?.en_attente ?? 0),
+                    trend: "à traiter",
+                    accent: "from-amber-500/20 to-transparent",
+                    bar: "bg-amber-400/90",
+                  },
+                  {
+                    label: "Validées",
+                    val: String(stats?.validee ?? 0),
+                    trend: "confirmées",
+                    accent: "from-violet-500/20 to-transparent",
+                    bar: "bg-violet-400/90",
+                  },
+                  {
+                    label: "Refusées",
+                    val: String(stats?.refusee ?? 0),
+                    trend: "archivées",
+                    accent: "from-rose-500/20 to-transparent",
+                    bar: "bg-rose-400/80",
+                  },
                 ].map((stat, i) => (
                   <ChromeCard
-                    key={i}
-                    className="flex w-full min-w-0 shrink-0 flex-col justify-between md:h-full"
+                    key={stat.label}
+                    className={cn(
+                      "flex w-full min-w-0 shrink-0 flex-col justify-between sm:min-h-[168px] md:h-full md:min-h-[200px]",
+                      cardShell
+                    )}
+                    innerClassName={cardInner}
                     title={stat.label}
                     subtitle={stat.trend}
                   >
-                    <div className="flex min-h-0 flex-col justify-between gap-3 md:h-full">
-                      <p className="font-mono text-xs uppercase text-neutral-400">{stat.label}</p>
-                      <div className="flex items-end justify-between gap-2">
-                        <h3 className="text-3xl font-bold sm:text-4xl">{stat.val}</h3>
-                        <div className="shrink-0 rounded bg-white/10 px-2 py-1 font-mono text-xs">{stat.trend}</div>
+                    <div
+                      className={cn(
+                        "pointer-events-none absolute inset-0 bg-gradient-to-br opacity-60 md:opacity-80",
+                        stat.accent
+                      )}
+                    />
+                    <div className="relative flex min-h-0 flex-col justify-between gap-3 md:h-full md:gap-6">
+                      <p className="font-mono text-xs uppercase text-neutral-400 md:hidden">{stat.label}</p>
+                      <div className="flex items-end justify-between gap-3 md:mt-2">
+                        <h3 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">{stat.val}</h3>
+                        <div className="shrink-0 rounded-lg border border-white/10 bg-black/30 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide text-neutral-300 md:px-3 md:py-1.5 md:text-xs">
+                          {stat.trend}
+                        </div>
                       </div>
-                      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/10 md:mt-4">
-                        <motion.div initial={{ width: 0 }} animate={{ width: "70%" }} transition={{ delay: 0.5 }} className="h-full bg-white shadow-[0_0_10px_white]" />
+                      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/10 md:mt-0 md:h-1.5">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: "70%" }}
+                          transition={{ delay: 0.3 + i * 0.1 }}
+                          className={cn("h-full shadow-[0_0_12px_rgba(255,255,255,0.35)]", stat.bar)}
+                        />
                       </div>
                     </div>
                   </ChromeCard>
                 ))}
 
+                <div
+                  className={cn(
+                    "w-full min-w-0 shrink-0 overflow-x-hidden rounded-2xl border border-white/10 md:col-span-2 lg:col-span-4",
+                    cardShell
+                  )}
+                >
+                  <GalleryDiagonalMarquee />
+                </div>
+
                 <ChromeCard
-                  className="min-h-0 w-full min-w-0 shrink-0 md:col-span-2 md:min-h-0 lg:col-span-3 lg:min-h-[400px]"
+                  className={cn(
+                    "min-h-0 w-full min-w-0 shrink-0 md:col-span-2 lg:col-span-3 lg:min-h-[440px]",
+                    cardShell
+                  )}
+                  innerClassName={cn(cardInner, "relative md:pb-10")}
                   title="Télémétrie système"
                   subtitle="Demandes créées vs validations (données réelles)"
                 >
-                  {/*
-                    Mobile : pas d'absolute — sinon les boutons recouvrent le titre (Safari iPhone).
-                    md+ : même mise en page qu'avant (coin haut-droit).
-                  */}
-                  <div className="relative z-20 mb-3 flex w-full min-w-0 flex-wrap items-center justify-center gap-2 sm:justify-end md:absolute md:top-6 md:right-6 md:mb-0 md:w-auto md:justify-end">
-                    {(
-                      [
-                        { id: "daily" as const, label: "Jour" },
-                        { id: "monthly" as const, label: "Mois" },
-                        { id: "yearly" as const, label: "Année" },
-                      ] as const
-                    ).map(({ id, label }) => (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => setChartPeriod(id)}
-                        className={cn(
-                          "shrink-0 px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider transition-colors sm:py-1",
-                          "rounded border border-white/20",
-                          chartPeriod === id ? "bg-white font-bold text-black" : "hover:bg-white/10 hover:text-white"
-                        )}
-                      >
-                        {label}
-                      </button>
-                    ))}
+                  <div className="relative z-20 flex flex-col gap-4 md:absolute md:right-8 md:top-8 md:mb-0 md:w-[min(100%,280px)] md:items-end">
+                    <ChartPeriodPicker value={chartPeriod} onChange={setChartPeriod} />
                   </div>
-                  <div className="mt-1 h-[240px] w-full min-w-0 sm:h-[280px] md:mt-4 md:h-[300px]">
+                  <div className="flex flex-col gap-3 md:gap-5 md:pt-14 lg:pt-16">
+                    <TelemetryLegend />
+                    <div className={cn(chartPanel, "h-[252px] w-full min-w-0 sm:h-[288px] md:h-[320px] lg:h-[340px]")}>
                     <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                      <AreaChart data={chartData}>
+                      <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                         <defs>
                           <linearGradient id="colorDemandes" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#fff" stopOpacity={0.3} />
@@ -281,7 +506,15 @@ export default function AdminDashboardPage() {
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
-                        <XAxis dataKey="name" stroke="#525252" tick={{ fontFamily: "Montserrat, sans-serif", fontSize: 12, fill: "#737373" }} tickLine={false} axisLine={false} dy={10} />
+                        <XAxis
+                          dataKey="name"
+                          stroke="#525252"
+                          tick={{ fontFamily: "Montserrat, sans-serif", fontSize: 10, fill: "#a3a3a3" }}
+                          tickLine={false}
+                          axisLine={false}
+                          dy={8}
+                          interval="preserveStartEnd"
+                        />
                         <YAxis hide />
                         <Tooltip
                           cursor={{ stroke: "rgba(255,255,255,0.2)" }}
@@ -323,6 +556,7 @@ export default function AdminDashboardPage() {
                         />
                       </AreaChart>
                     </ResponsiveContainer>
+                    </div>
                   </div>
                 </ChromeCard>
 
@@ -335,16 +569,17 @@ export default function AdminDashboardPage() {
                     <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                       <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
                         <PolarGrid stroke="rgba(255,255,255,0.1)" />
-                        <PolarAngleAxis dataKey="subject" tick={{ fill: "#a3a3a3", fontSize: 10, fontFamily: "Montserrat, sans-serif" }} />
+                        <PolarAngleAxis
+                          dataKey="subject"
+                          tick={{ fill: "#a3a3a3", fontSize: 10, fontFamily: "Montserrat, sans-serif" }}
+                        />
                         <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                         <Tooltip
                           content={({ active, payload }) => {
                             if (!active || !payload?.[0]) return null;
                             const p = payload[0].payload as { subject: string; raw: number; A: number };
                             return (
-                              <div
-                                className="rounded-lg border border-white/20 bg-black px-3 py-2 font-mono text-xs text-white shadow-xl"
-                              >
+                              <div className="rounded-lg border border-white/20 bg-black px-3 py-2 font-mono text-xs text-white shadow-xl">
                                 <p className="font-bold text-white">{p.subject}</p>
                                 <p className="mt-1 text-neutral-300">Nombre : {p.raw}</p>
                               </div>
@@ -362,69 +597,33 @@ export default function AdminDashboardPage() {
                 className={cn(
                   "flex w-full shrink-0 flex-col overflow-hidden",
                   "max-md:flex-none max-md:min-h-0",
-                  "md:flex-1 md:min-h-[min(70vh,520px)]"
+                  "md:flex-1 md:min-h-[min(68vh,560px)]",
+                  cardShell
                 )}
                 title=""
                 subtitle=""
-                innerClassName="flex min-h-0 flex-col p-0 max-md:min-h-0 max-md:flex-none md:flex-1"
+                innerClassName="flex min-h-0 flex-col p-0 max-md:min-h-0 max-md:flex-none md:flex-1 md:overflow-hidden"
               >
-                <div className="flex shrink-0 flex-col gap-1 border-b border-white/10 bg-black/40 px-4 py-4 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                  <div className="min-w-0 pr-2">
-                    <h2 className="flex flex-wrap items-center gap-2 text-lg font-black uppercase leading-snug tracking-normal text-white sm:gap-3 sm:text-xl sm:tracking-wide md:text-2xl md:tracking-widest">
-                      <ActivitySquare className="h-5 w-5 shrink-0 text-indigo-500 sm:h-6 sm:w-6" />
+                <div className="flex shrink-0 items-start justify-between gap-4 border-b border-white/10 bg-gradient-to-br from-indigo-950/35 via-black/50 to-transparent px-5 py-6 backdrop-blur-md sm:px-8 sm:py-7 md:px-10 md:py-8">
+                  <div className="min-w-0">
+                    <h2 className="flex flex-wrap items-center gap-2.5 text-lg font-black uppercase leading-snug text-white sm:gap-3 sm:text-xl md:text-2xl md:tracking-[0.15em]">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-400/30 bg-indigo-500/15 sm:h-10 sm:w-10">
+                        <ActivitySquare className="h-4 w-4 text-indigo-400 sm:h-5 sm:w-5" />
+                      </span>
                       <span className="min-w-0 break-words">Journal des demandes</span>
                     </h2>
-                    <p className="mt-1 font-mono text-[10px] text-neutral-400 sm:text-xs">{requests.length} paquets interceptés</p>
+                    <p className="mt-2 font-mono text-xs text-neutral-400 sm:text-sm">
+                      {requests.length === 1
+                        ? "1 demande récente"
+                        : `${requests.length} demandes récentes`}
+                    </p>
                   </div>
+                  <span className="shrink-0 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 font-mono text-xs font-bold tabular-nums text-white sm:px-4 sm:py-2">
+                    {requests.length}
+                  </span>
                 </div>
-                <div className="min-h-0 flex-1 overflow-auto max-md:max-h-[min(52vh,420px)] max-md:flex-none md:max-h-none">
-                  <table className="w-full min-w-[32rem] table-fixed text-left font-mono text-[11px] sm:min-w-0 sm:table-auto sm:text-xs">
-                    <thead className="sticky top-0 z-10 border-b border-white/10 bg-neutral-900/95 backdrop-blur-md">
-                      <tr>
-                        <th className="w-[28%] py-3 pl-4 pr-2 font-bold uppercase tracking-wide text-neutral-500 sm:w-auto sm:px-6 sm:tracking-widest">
-                          Client
-                        </th>
-                        <th className="w-[18%] py-3 px-2 font-bold uppercase tracking-wide text-neutral-500 sm:px-6 sm:tracking-widest">
-                          Type
-                        </th>
-                        <th className="w-[20%] py-3 px-2 font-bold uppercase tracking-wide text-neutral-500 sm:px-6 sm:tracking-widest">
-                          Date
-                        </th>
-                        <th className="hidden py-3 px-2 font-bold uppercase tracking-wide text-neutral-500 sm:table-cell sm:px-6 sm:tracking-widest">
-                          Axe
-                        </th>
-                        <th className="w-[22%] py-3 pl-2 pr-4 text-right font-bold uppercase tracking-wide text-neutral-500 sm:w-auto sm:px-6 sm:tracking-widest">
-                          Statut
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {requests.map((log) => (
-                        <tr key={log._id} className="cursor-crosshair transition-colors hover:bg-white/5">
-                          <td className="max-w-0 truncate py-3 pl-4 pr-2 font-bold text-indigo-400 sm:max-w-none sm:px-6 sm:whitespace-normal">
-                            {log.client?.companyName || "-"}
-                          </td>
-                          <td className="truncate py-3 px-2 text-neutral-300 sm:px-6 sm:whitespace-normal">{log.client?.clientType || "-"}</td>
-                          <td className="whitespace-nowrap py-3 px-2 text-neutral-500 sm:px-6">{new Date(log.requestedDate).toLocaleDateString()}</td>
-                          <td className="hidden py-3 px-2 text-neutral-300 sm:table-cell sm:px-6">{log.communicationAxis}</td>
-                          <td className="py-3 pl-2 pr-4 text-right sm:px-6">
-                            <span
-                              className={cn(
-                                "inline-block max-w-full truncate rounded border px-1.5 py-0.5 text-[10px] sm:px-2 sm:text-xs",
-                                log.status === "validee"
-                                  ? "border-green-500/30 bg-green-500/10 text-green-400"
-                                  : log.status === "en_attente"
-                                    ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-400"
-                                    : "border-red-500/30 bg-red-500/10 text-red-500"
-                              )}
-                            >
-                              {log.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="min-h-0 flex-1 max-md:max-h-none md:overflow-auto">
+                  <RequestJournal requests={requests as JournalRequest[]} />
                 </div>
               </ChromeCard>
         </div>

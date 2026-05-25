@@ -7,6 +7,11 @@ import { Calendar, Clock, Pencil, Radio } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { getToken, getUser } from "@/lib/auth";
 import { useRouter } from "next/navigation";
+import {
+  MemberDemandesHero,
+  MemberEmptyStateVisual,
+  MemberRequestCardVisual,
+} from "@/components/member/MemberBrandImagery";
 import { MemberY2KLayout } from "@/components/member/MemberY2KLayout";
 import { ChromeCard } from "@/components/admin/Y2KAdminLayout";
 import {
@@ -55,17 +60,12 @@ export default function MembreDemandesPage() {
 
   return (
     <MemberY2KLayout>
-      <div className="mx-auto w-full min-w-0 max-w-3xl space-y-5 px-0 sm:space-y-6">
-        <div className="flex min-w-0 flex-col gap-2">
-          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-violet-300/80">Suivi</p>
-          <h2 className="bg-gradient-to-b from-white to-white/60 bg-clip-text text-2xl font-black tracking-tight text-transparent sm:text-3xl md:text-4xl">
-            Mes demandes P2C
-          </h2>
-          <p className="text-xs leading-relaxed text-neutral-400 sm:text-sm">
-            Retrouvez ici le statut de chaque demande dès que vous êtes connecté : en attente, validée, refusée ou à
-            compléter.
-          </p>
-        </div>
+      <div className="mx-auto w-full min-w-0 max-w-4xl space-y-6 px-0 sm:space-y-8">
+        <MemberDemandesHero
+          eyebrow="Suivi client"
+          title="Mes demandes P2C"
+          description="Statut en temps réel : en attente, validée, refusée ou à compléter. Chaque demande reste liée à votre contact et à votre créneau Pixaura."
+        />
 
         <p className="text-[11px] text-neutral-500 sm:text-xs">
           <Link href="/membre/p2c" className="text-violet-300 underline-offset-4 hover:text-white hover:underline">
@@ -76,19 +76,22 @@ export default function MembreDemandesPage() {
         {loading ? (
           <p className="font-mono text-xs text-neutral-500 sm:text-sm">Chargement…</p>
         ) : items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-10 text-center text-xs leading-relaxed text-neutral-400 sm:px-6 sm:py-12 sm:text-sm">
-            Aucune demande pour le moment. Envoyez votre première demande depuis la page{" "}
-            <Link href="/membre/p2c" className="text-violet-300 hover:underline">
-              P2C mensuel
-            </Link>
-            .
+          <div className="space-y-5">
+            <MemberEmptyStateVisual />
+            <p className="text-center text-sm text-neutral-400">
+              <Link href="/membre/p2c" className="font-semibold text-violet-300 hover:text-white hover:underline">
+                Créer une demande P2C →
+              </Link>
+            </p>
           </div>
         ) : (
-          <ul className="space-y-4">
-            {items.map((r) => (
+          <ul className="space-y-5">
+            {items.map((r, i) => (
               <li key={r._id}>
-                <ChromeCard className="min-w-0 border-white/10">
-                  <div className="flex min-w-0 flex-col gap-3 sm:gap-4">
+                <ChromeCard className="min-w-0 overflow-hidden border-white/10">
+                  <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:gap-5">
+                    <MemberRequestCardVisual index={i} />
+                    <div className="flex min-w-0 flex-1 flex-col gap-3 sm:gap-4">
                     <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[10px] font-mono uppercase tracking-widest text-neutral-500">
@@ -145,6 +148,7 @@ export default function MembreDemandesPage() {
                         Modifier la demande
                       </Link>
                     ) : null}
+                    </div>
                   </div>
                 </ChromeCard>
               </li>

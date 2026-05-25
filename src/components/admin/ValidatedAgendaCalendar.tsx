@@ -151,52 +151,57 @@ export function ValidatedAgendaCalendar() {
 
   return (
     <div className="flex flex-col gap-6 min-h-0">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between shrink-0">
+      <header className="flex shrink-0 flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white uppercase">Agenda validé</h1>
-          <p className="mt-2 font-mono text-xs text-neutral-400 max-w-xl">
+          <h1 className="text-3xl font-black uppercase tracking-tight text-white md:text-4xl lg:text-5xl">
+            Agenda validé
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-neutral-300 sm:text-base">
             Réservations confirmées par Pixaura : entreprise, date complète et créneau horaire. Les créneaux déjà passés
             apparaissent en rouge ; les rendez-vous à venir en vert.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={goPrev}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 hover:bg-white/10 transition-colors"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-colors hover:bg-white/10 sm:h-12 sm:w-12"
             aria-label="Mois précédent"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
           </button>
-          <div className="min-w-[180px] text-center font-mono text-sm font-bold uppercase tracking-widest text-white px-3">
+          <div className="min-w-[200px] px-4 text-center text-base font-bold uppercase tracking-[0.12em] text-white sm:text-lg">
             {formatMonthYearFr(y, m)}
           </div>
           <button
             type="button"
             onClick={goNext}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 hover:bg-white/10 transition-colors"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-colors hover:bg-white/10 sm:h-12 sm:w-12"
             aria-label="Mois suivant"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
           </button>
           <button
             type="button"
             onClick={goToday}
-            className="ml-0 lg:ml-2 rounded-full border border-indigo-400/40 bg-indigo-500/15 px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider text-indigo-200 hover:bg-indigo-500/25 transition-colors"
+            className="ml-0 rounded-full border border-indigo-400/40 bg-indigo-500/15 px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-indigo-100 transition-colors hover:bg-indigo-500/25 lg:ml-2"
           >
             Aujourd&apos;hui
           </button>
         </div>
       </header>
 
-      {error && <p className="text-sm text-red-400 font-mono">{error}</p>}
-      {loading && <p className="text-xs font-mono text-neutral-500">Chargement…</p>}
+      {error && <p className="text-sm font-medium text-red-300 sm:text-base">{error}</p>}
+      {loading && <p className="text-sm text-neutral-400 sm:text-base">Chargement…</p>}
 
-      <div className="flex-1 min-h-0 overflow-auto rounded-3xl border border-white/10 bg-neutral-950/40 backdrop-blur-xl">
-        <div className="min-w-[720px] p-3 md:p-5">
-          <div className="grid grid-cols-7 gap-px rounded-2xl overflow-hidden border border-white/10 bg-white/5">
+      <div className="min-h-0 flex-1 overflow-auto rounded-3xl border border-white/10 bg-neutral-950/40 shadow-[0_8px_40px_-16px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+        <div className="min-w-[720px] p-4 md:p-6 lg:p-7">
+          <div className="grid grid-cols-7 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/5">
             {WEEKDAYS.map((w) => (
-              <div key={w} className="bg-black/50 px-2 py-3 text-center text-[10px] font-mono font-bold uppercase tracking-widest text-neutral-500">
+              <div
+                key={w}
+                className="bg-black/50 px-2 py-4 text-center text-xs font-bold uppercase tracking-[0.18em] text-neutral-300 sm:py-5 sm:text-sm"
+              >
                 {w}
               </div>
             ))}
@@ -207,24 +212,29 @@ export function ValidatedAgendaCalendar() {
                 <div
                   key={idx}
                   className={cn(
-                    "min-h-[120px] md:min-h-[140px] bg-neutral-900/30 p-2 flex flex-col border-t border-white/5",
+                    "flex min-h-[128px] flex-col border-t border-white/5 bg-neutral-900/30 p-2.5 sm:min-h-[148px] md:min-h-[160px] md:p-3",
                     cell.day === null && "bg-black/20",
-                    isToday && cell.day !== null && "ring-1 ring-inset ring-indigo-400/50 bg-indigo-950/20"
+                    isToday && cell.day !== null && "bg-indigo-950/20 ring-1 ring-inset ring-indigo-400/50"
                   )}
                 >
                   {cell.day !== null && (
                     <>
-                      <div className="flex items-start justify-between gap-1 mb-2">
-                        <span className={cn("text-sm font-bold tabular-nums", isToday ? "text-indigo-300" : "text-neutral-200")}>
+                      <div className="mb-2.5 flex items-start justify-between gap-1.5">
+                        <span
+                          className={cn(
+                            "text-base font-bold tabular-nums sm:text-lg",
+                            isToday ? "text-indigo-200" : "text-neutral-100"
+                          )}
+                        >
                           {cell.day}
                         </span>
                         {list.length > 0 && (
-                          <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-mono font-bold uppercase text-neutral-400">
+                          <span className="shrink-0 rounded-full border border-white/12 bg-white/5 px-2.5 py-0.5 text-[11px] font-bold uppercase text-neutral-300 sm:text-xs">
                             {list.length} {list.length === 1 ? "rdv" : "rdv"}
                           </span>
                         )}
                       </div>
-                      <div className="flex flex-col gap-1.5 flex-1 overflow-y-auto max-h-[220px] md:max-h-[280px] scrollbar-thin">
+                      <div className="scrollbar-thin flex max-h-[220px] flex-1 flex-col gap-2 overflow-y-auto md:max-h-[280px]">
                         {list.map((r) => {
                           const { end, timeLabel } = slotMeta(r);
                           const past = end.getTime() < now.getTime();
@@ -233,21 +243,23 @@ export function ValidatedAgendaCalendar() {
                               key={r._id}
                               href={`/admin/demandes/${r._id}`}
                               className={cn(
-                                "group block rounded-xl border px-2.5 py-2 transition-all hover:scale-[1.01] hover:shadow-lg",
+                                "group block rounded-xl border px-3 py-2.5 transition-all hover:scale-[1.01] hover:shadow-lg sm:px-3.5 sm:py-3",
                                 past
                                   ? "border-red-500/35 bg-red-950/40 text-red-100 hover:border-red-400/50"
                                   : "border-emerald-500/35 bg-emerald-950/35 text-emerald-50 hover:border-emerald-400/50"
                               )}
                             >
-                              <div className="flex items-start justify-between gap-1">
-                                <p className="text-xs font-bold leading-snug line-clamp-2">{companyName(r)}</p>
-                                <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
+                              <div className="flex items-start justify-between gap-1.5">
+                                <p className="line-clamp-2 text-sm font-bold leading-snug sm:text-[15px]">
+                                  {companyName(r)}
+                                </p>
+                                <ChevronRight className="h-4 w-4 shrink-0 opacity-40 transition-opacity group-hover:opacity-100" />
                               </div>
-                              <p className="mt-1 text-[10px] font-mono opacity-80 capitalize leading-tight">
+                              <p className="mt-1.5 text-xs capitalize leading-snug opacity-90 sm:text-sm">
                                 {cell.dateKey ? formatLongFrenchDate(cell.dateKey) : ""}
                               </p>
-                              <p className="mt-1 flex items-center gap-1 text-[10px] font-mono font-bold opacity-90">
-                                <Clock className="h-3 w-3 shrink-0" />
+                              <p className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold opacity-95 sm:text-sm">
+                                <Clock className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
                                 {timeLabel}
                               </p>
                             </Link>

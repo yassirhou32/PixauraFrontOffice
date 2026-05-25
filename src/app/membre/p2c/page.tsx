@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { getToken, getUser } from "@/lib/auth";
 import { MemberY2KLayout } from "@/components/member/MemberY2KLayout";
 import { ChromeCard } from "@/components/admin/Y2KAdminLayout";
+import { MemberP2cPageHeader } from "@/components/member/MemberBrandImagery";
 import { P2cRequestForm, type P2cFormState } from "@/components/member/P2cRequestForm";
 import { fetchP2cPageStatus, type P2cMonthStatus } from "@/lib/p2cStatus";
 import { FULL_DAY_SLOT_ID } from "@/lib/calendarClient";
@@ -94,20 +95,17 @@ export default function MembreP2CPage() {
 
   return (
     <MemberY2KLayout wideMain>
-      <p className="mb-3 text-sm text-neutral-400">
+      <MemberP2cPageHeader
+        eyebrow="Espace membre · P2C"
+        title="Vos tournages Pixaura"
+        description="Deux projets par mois — créneaux de 2 h ou journée complète. Renseignez vos coordonnées et réservez votre date en toute clarté."
+      />
+      <p className="mb-6 text-sm text-neutral-400">
         <Link href="/membre/demandes" className="text-violet-300 underline-offset-4 hover:text-white hover:underline">
           Voir le suivi de mes demandes
         </Link>
-      </p>
-      <h2 className="mb-2 bg-gradient-to-b from-white to-white/60 bg-clip-text text-2xl font-black tracking-tight text-transparent sm:mb-3 sm:text-3xl md:text-4xl">
-        P2C mensuel
-      </h2>
-      <p className="mb-8 max-w-3xl text-sm leading-relaxed text-neutral-400">
-        Projet 1 à gauche : envoyé = verrouillé (modification via{" "}
-        <Link href="/membre/demandes" className="text-violet-300 underline">
-          Mes demandes
-        </Link>
-        ). Projet 2 à droite : formulaire vide à remplir après l&apos;envoi du Projet 1.
+        {" · "}
+        Projet 1 à gauche (verrouillé après envoi). Projet 2 à droite après validation du Projet 1.
       </p>
 
       {loading ? (
